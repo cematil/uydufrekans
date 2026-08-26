@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CepteUydu - Modern Uydu ve Kanal Kataloğu</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 900: '#0b0f19', 800: '#111827', 700: '#1f2937', 600: '#374151' },
+                        neon: { cyan: '#06b6d4', blue: '#3b82f6' }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- KORUMA CSS: Metin Seçimini Engelleme -->
+    <style>
+        body, * {
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            user-select: none !important;
+        }
+    </style>
+</head>
+<body class="bg-space-900 text-slate-100 font-sans min-h-screen selection:bg-none" x-data="satelliteApp()">
+
+    <!-- Üst Menü (Navbar) -->
+    <header class="sticky top-0 z-50 backdrop-blur-md bg-space-900/80 border-b border-space-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-neon-cyan to-neon-blue flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                    <i class="fa-solid fa-satellite text-space-900 text-lg"></i>
+                </div>
+                <span class="text-xl font-bold tracking-wider bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">CepteUydu</span>
+            </div>
+            
+            <div class="w-1/3 max-w-md hidden md:block">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-search"></i>
+                    </span>
+                    <input type="text" x-model="searchQuery" placeholder="Genel uydu veya kanal ara..." class="w-full pl-10 pr-4 py-2 bg-space-800 border border-space-700 rounded-xl text-sm focus:outline-none focus:border-neon-cyan text-white transition-colors">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Ana İçerik -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <div x-show="loading" class="text-center py-20">
+            <i class="fa-solid fa-lock fa-bounce text-4xl text-neon-cyan mb-4"></i>
+            <p class="text-slate-400 text-base">Güvenli veritabanı yükleniyor, lütfen bekleyin...</p>
+        </div>
+
+        <div x-show="!loading" x-cloak>
+            <div class="mb-10 text-center md:text-left flex flex-col md:flex-row md:items-center md:justify-between bg-gradient-to-r from-space-800/80 to-space-700/40 p-8 rounded-3xl border border-space-700/50 shadow-2xl relative overflow-hidden">
+                <div class="absolute right-0 top-0 translate-x-10 -translate-y-10 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="relative z-10">
+                    <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight mb-3">Eksiksiz Uydu & Frekans Kataloğu</h1>
+                    <p class="text-slate-400 max-w-xl text-sm sm:text-base">Korumalı sistem üzerinden uydulara göre ayrıştırılmış frekans ve kanal rehberi.</p>
+                </div>
+                <div class="mt-6 md:mt-0 flex gap-4 justify-center relative z-10">
+                    <div class="bg-space-900/60 border border-space-700 px-5 py-3 rounded-2xl text-center">
+                        <span class="block text-2xl font-bold text-neon-cyan" x-text="filteredSatellites.length"></span>
+                        <span class="text-xs text-slate-400">Kategorize Uydu</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <template x-for="sat in filteredSatellites" :key="sat.name">
+                    <div class="bg-space-800/60 backdrop-blur-md border border-space-700/80 rounded-3xl p-6 hover:border-neon-cyan/60 transition-all duration-300 shadow-xl group flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="text-xs font-semibold px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" x-text="sat.name"></span>
+                                <span class="flex h-3 w-3 relative">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                                </span>
+                            </div>
+                            <h3 class="text-xl font-bold text-white group-hover:text-neon-cyan transition-colors" x-text="sat.name"></h3>
+                            <p class="text-slate-400 text-sm mt-2" x-text="sat.channels.length + ' Kayıtlı Yayın'"></p>
+                        </div>
+
+                        <button @click="openModal(sat)" class="mt-6 w-full py-3 bg-space-700 hover:bg-neon-cyan hover:text-space-900 text-white font-medium rounded-xl transition-all flex items-center justify-center space-x-2 shadow-md">
+                            <span>Kanalları Gör & Ara</span>
+                            <i class="fa-solid fa-arrow-right text-xs"></i>
+                        </button>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL -->
+    <div x-show="selectedSat" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4" x-cloak>
+        <div @click.outside="selectedSat = null" class="bg-space-800 border border-space-700 rounded-3xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            
+            <div class="p-6 border-b border-space-700 bg-space-900/80 flex flex-col gap-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-400" x-text="modalFilteredChannels.length + ' Yayın Listeleniyor'"></span>
+                        <h2 class="text-2xl font-bold text-white mt-1" x-text="selectedSat?.name"></h2>
+                    </div>
+                    <button @click="selectedSat = null" class="w-10 h-10 rounded-full bg-space-700 hover:bg-space-600 flex items-center justify-center text-slate-300 transition-colors">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
+                    <div class="flex bg-space-900 p-1 rounded-xl border border-space-700 text-xs w-full sm:w-auto">
+                        <button @click="statusFilter = 'all'" :class="statusFilter === 'all' ? 'bg-space-700 text-white font-bold' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-lg transition-all flex-1 sm:flex-none">Tümü</button>
+                        <button @click="statusFilter = 'active'" :class="statusFilter === 'active' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-lg transition-all flex-1 sm:flex-none">Aktif</button>
+                        <button @click="statusFilter = 'passive'" :class="statusFilter === 'passive' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-lg transition-all flex-1 sm:flex-none">Pasif / Yayın Dışı</button>
+                    </div>
+
+                    <div class="w-full sm:w-1/2 relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                        </span>
+                        <input type="text" x-model="modalSearchQuery" placeholder="Kanal adı, frekans veya ülke ara..." class="w-full pl-9 pr-4 py-2 bg-space-800 border border-space-700 rounded-xl text-sm focus:outline-none focus:border-neon-cyan text-white transition-colors">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" x-show="modalFilteredChannels.length > 0">
+                    <template x-for="ch in modalFilteredChannels" :key="ch.name + ch.frequency + ch.satellite">
+                        <div class="bg-space-900/90 border border-space-700/80 rounded-2xl p-4 flex flex-col justify-between hover:border-neon-cyan/50 transition-all shadow-md">
+                            <div>
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-bold text-white text-base truncate pr-2" x-text="ch.name"></h4>
+                                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-space-800 text-slate-300 border border-space-600 shrink-0" x-text="ch.country"></span>
+                                </div>
+
+                                <div class="mb-2">
+                                    <span x-show="ch.is_active" class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><i class="fa-solid fa-circle-check mr-1"></i>Aktif Yayın</span>
+                                    <span x-show="!ch.is_active" class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20"><i class="fa-solid fa-circle-xmark mr-1"></i>Pasif / Yayın Dışı</span>
+                                </div>
+
+                                <div class="text-xs text-neon-cyan font-mono mb-2 flex items-center space-x-2" x-show="ch.is_active">
+                                    <i class="fa-solid fa-signal text-[10px]"></i>
+                                    <span x-text="ch.frequency + ' ' + ch.polarization + ' — SR:' + ch.symbol_rate + (ch.fec ? ' ' + ch.fec : '')"></span>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center border-t border-space-700/60 pt-2 text-[11px] text-slate-400">
+                                <span x-text="'Şifre: ' + ch.encryption"></span>
+                                <span class="text-emerald-400 font-mono" x-text="ch.sid ? 'SID: ' + ch.sid : ''"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <div x-show="modalFilteredChannels.length === 0" class="text-center py-12 text-slate-400">
+                    <i class="fa-solid fa-satellite-dish text-4xl mb-3 text-space-600"></i>
+                    <p class="text-base">Aradığınız kriterlere uygun kanal bulunamadı.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KORUMA SCRIPT'LERİ VE ŞİFRE ÇÖZÜCÜ MANTIK -->
+    <script>
+        // 1. KORUMA: Sağ Tık Kapatma
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+        // 2. KORUMA: Geliştirici Kısayollarını (F12, Ctrl+U vb.) Engelleme
+        document.onkeydown = function(e) {
+            if (e.keyCode == 123 || 
+                (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67)) || 
+                (e.ctrlKey && e.keyCode == 85)) {
+                return false;
+            }
+        };
+
+        // 3. ŞİFRE ÇÖZÜCÜ UYGULAMA MANTIĞI
+        function satelliteApp() {
+            return {
+                loading: true,
+                searchQuery: '',
+                modalSearchQuery: '',
+                statusFilter: 'all',
+                selectedSat: null,
+                rawSatellites: {},
+                async init() {
+                    try {
+                        let response = await fetch('uydulara_gore_kanallar.enc');
+                        let encryptedText = await response.text();
+                        // Base64 Şifre Çözme (Decryption)
+                        let decryptedJson = decodeStringEncoding(encryptedText);
+                        this.rawSatellites = JSON.parse(decryptedJson);
+                    } catch (e) {
+                        console.error('Veri yüklenemedi:', e);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+                get satellitesList() {
+                    let list = [];
+                    for (let [name, channels] of Object.entries(this.rawSatellites)) {
+                        list.push({ name: name, channels: channels });
+                    }
+                    return list;
+                },
+                get filteredSatellites() {
+                    if (!this.searchQuery) return this.satellitesList;
+                    let q = this.searchQuery.toLowerCase();
+                    
+                    return this.satellitesList.filter(sat => {
+                        if (sat.name.toLowerCase().includes(q)) return true;
+                        let matched = sat.channels.filter(c => 
+                            c.name.toLowerCase().includes(q) || 
+                            c.frequency.toLowerCase().includes(q) ||
+                            c.country.toLowerCase().includes(q)
+                        );
+                        return matched.length > 0;
+                    });
+                },
+                get modalFilteredChannels() {
+                    if (!this.selectedSat) return [];
+                    let channels = this.selectedSat.channels;
+
+                    if (this.statusFilter === 'active') {
+                        channels = channels.filter(c => c.is_active);
+                    } else if (this.statusFilter === 'passive') {
+                        channels = channels.filter(c => !c.is_active);
+                    }
+
+                    if (!this.modalSearchQuery) return channels;
+                    
+                    let q = this.modalSearchQuery.toLowerCase();
+                    return channels.filter(c => 
+                        c.name.toLowerCase().includes(q) || 
+                        c.frequency.toLowerCase().includes(q) ||
+                        c.country.toLowerCase().includes(q) ||
+                        c.encryption.toLowerCase().includes(q)
+                    );
+                },
+                openModal(sat) {
+                    this.selectedSat = sat;
+                    this.modalSearchQuery = '';
+                    this.statusFilter = 'all';
+                }
+            }
+        }
+
+        // UTF-8 Uyumlu Base64 Çözücü Yardımcı Fonksiyon
+        function decodeStringEncoding(str) {
+            return decodeURIComponent(atob(str).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+        }
+    </script>
+</body>
+</html>
