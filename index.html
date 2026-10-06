@@ -6,7 +6,9 @@
     <meta name="description" content="CepteUydu: uydulara göre ayrıştırılmış frekans ve kanal rehberi. Kanal adı, frekans, ülke ve şifreleme sistemine göre arama yapın.">
     <meta name="theme-color" content="#0b0f19">
     <title>CepteUydu - Modern Uydu ve Kanal Kataloğu</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%B0%EF%B8%8F%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="manifest" href="manifest.webmanifest">
 
     <!-- Alpine yüklenmeden önce x-cloak öğelerini gizle -->
     <style>[x-cloak] { display: none !important; }</style>
@@ -14,7 +16,7 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
+        if (window.tailwind) tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
@@ -47,8 +49,11 @@
                 <span class="text-xl font-bold tracking-wider bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">CepteUydu</span>
             </a>
 
-            <div class="w-full md:w-1/3 md:max-w-md">
-                <label class="relative block">
+            <div class="w-full md:w-auto flex items-center gap-3 md:flex-1 md:justify-end">
+                <a href="hizala.html" class="shrink-0 px-3 py-2 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-blue text-space-900 text-sm font-semibold shadow-lg shadow-cyan-500/20 hover:opacity-90 transition-opacity">
+                    <i class="fa-solid fa-crosshairs mr-1"></i><span class="hidden sm:inline">Çanak Hizala / </span>AR
+                </a>
+                <label class="relative block flex-1 md:max-w-md">
                     <span class="sr-only">Genel arama</span>
                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                         <i class="fa-solid fa-search"></i>
@@ -99,6 +104,26 @@
                 </div>
             </div>
 
+            <!-- Sabit: Türksat Kanal Güncelleme (TKGS) / şebeke arama frekansı -->
+            <div class="mb-8 flex flex-col sm:flex-row sm:items-center gap-4 p-5 rounded-3xl border border-amber-500/30 bg-amber-500/5">
+                <div class="w-12 h-12 shrink-0 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center">
+                    <i class="fa-solid fa-thumbtack text-lg"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h2 class="font-bold text-white">Türksat Kanal Güncelleme (TKGS)</h2>
+                    <p class="text-sm text-slate-400">Türksat 4A / 5B / 6A · 42.0°E — Kanallar kaybolduysa alıcıda bu frekansla <b class="text-slate-300">şebeke araması</b> yapın. TKGS destekli alıcılar listeyi otomatik günceller.</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <template x-for="tp in tkgs" :key="tp.text">
+                        <button type="button" @click="copyText(tp.text, tp.text)" class="font-mono text-sm px-3 py-2 rounded-xl bg-space-900/70 border border-space-700 hover:border-amber-400 transition-colors" :title="'Kopyala: ' + tp.text">
+                            <span class="text-amber-300" x-text="tp.text"></span>
+                            <span class="text-[10px] text-slate-500 ml-1" x-text="tp.note"></span>
+                            <i class="ml-1 text-[11px]" :class="copiedId === tp.text ? 'fa-solid fa-check text-emerald-400' : 'fa-regular fa-copy text-slate-500'"></i>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <template x-for="sat in filteredSatellites" :key="sat.name">
                     <div class="bg-space-800/60 backdrop-blur-md border border-space-700/80 rounded-3xl p-6 hover:border-neon-cyan/60 transition-all duration-300 shadow-xl group flex flex-col justify-between">
@@ -118,10 +143,16 @@
                             <p x-show="searchQuery && sat.matchCount" class="text-xs text-neon-cyan mt-1" x-text="formatNumber(sat.matchCount) + ' eşleşen kanal'"></p>
                         </div>
 
-                        <button @click="openModal(sat)" class="mt-6 w-full py-3 bg-space-700 hover:bg-neon-cyan hover:text-space-900 text-white font-medium rounded-xl transition-all flex items-center justify-center space-x-2 shadow-md">
-                            <span>Kanalları Gör &amp; Ara</span>
-                            <i class="fa-solid fa-arrow-right text-xs"></i>
-                        </button>
+                        <div class="mt-6 flex gap-2">
+                            <button @click="openModal(sat)" class="flex-1 py-3 bg-space-700 hover:bg-neon-cyan hover:text-space-900 text-white font-medium rounded-xl transition-all flex items-center justify-center space-x-2 shadow-md">
+                                <span>Kanalları Gör &amp; Ara</span>
+                                <i class="fa-solid fa-arrow-right text-xs"></i>
+                            </button>
+                            <a x-show="sat.orbit !== null" :href="'hizala.html?konum=' + sat.orbit" title="Bu uyduya çanak hizala" class="w-12 shrink-0 bg-space-700 hover:bg-neon-cyan hover:text-space-900 text-white rounded-xl transition-all flex items-center justify-center shadow-md">
+                                <i class="fa-solid fa-crosshairs"></i>
+                                <span class="sr-only">Çanak hizala</span>
+                            </a>
+                        </div>
                     </div>
                 </template>
             </div>
@@ -167,6 +198,17 @@
                         </span>
                         <input type="search" x-ref="modalSearch" x-model.debounce.200ms="modalSearchQuery" @input="visibleCount = PAGE_SIZE" placeholder="Kanal adı, frekans, ülke veya şifreleme ara..." class="w-full pl-9 pr-4 py-2 bg-space-800 border border-space-700 rounded-xl text-sm focus:outline-none focus:border-neon-cyan text-white transition-colors">
                     </label>
+                </div>
+
+                <!-- Kategori filtresi (kanal adından tahmin edilir) -->
+                <div class="flex gap-2 overflow-x-auto pb-1 -mb-1 text-xs" title="Kategoriler kanal adından tahmin edilir">
+                    <button @click="setCategory('')" :class="categoryFilter === '' ? 'bg-neon-cyan text-space-900 font-bold border-neon-cyan' : 'text-slate-300 border-space-700 hover:border-neon-cyan'" class="shrink-0 px-3 py-1.5 rounded-full border transition-all">Tüm Kategoriler</button>
+                    <template x-for="cat in categories" :key="cat.key">
+                        <button x-show="categoryCounts[cat.key]" @click="setCategory(cat.key)" :class="categoryFilter === cat.key ? 'bg-neon-cyan text-space-900 font-bold border-neon-cyan' : 'text-slate-300 border-space-700 hover:border-neon-cyan'" class="shrink-0 px-3 py-1.5 rounded-full border transition-all">
+                            <i class="fa-solid mr-1" :class="cat.icon"></i><span x-text="cat.label"></span>
+                            <span class="opacity-60" x-text="formatNumber(categoryCounts[cat.key])"></span>
+                        </button>
+                    </template>
                 </div>
             </div>
 
@@ -215,26 +257,12 @@
         </div>
     </div>
 
+    <script src="js/veri.js"></script>
+    <script src="js/uydu-hesap.js"></script>
+    <script src="js/kategoriler.js"></script>
     <script>
-        const DATA_URL = 'uydulara_gore_kanallar.enc';
-        const ARCHIVE_GROUP = 'Pasif / Eski Yayınlar';
-
-        // Türkçe karakterleri ve büyük/küçük harfi yok sayan arama anahtarı
-        // ("Turkiye" ile "Türkiye", "sifresiz" ile "Şifresiz" eşleşir).
-        function normalize(str) {
-            return String(str || '')
-                .toLocaleLowerCase('tr')
-                .replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u')
-                .replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c')
-                .normalize('NFD').replace(/[̀-ͯ]/g, '');
-        }
-
-        // UTF-8 uyumlu Base64 çözücü (.enc dosyası Base64 kodlu JSON'dur)
-        function decodeBase64Utf8(str) {
-            const binary = atob(str.trim());
-            const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
-            return new TextDecoder('utf-8').decode(bytes);
-        }
+        const { ARCHIVE_GROUP, normalize } = CepteVeri;
+        CepteVeri.registerServiceWorker();
 
         // "Türksat 4A (42.0°E)" -> { title: "Türksat 4A", position: "42.0°E" }
         function splitSatelliteName(name) {
@@ -250,6 +278,12 @@
                 searchQuery: '',
                 modalSearchQuery: '',
                 statusFilter: 'all',
+                categoryFilter: '',
+                categories: CepteKategori.CATEGORIES,
+                tkgs: [
+                    { text: '12380 V 27500', note: 'TKGS / şebeke' },
+                    { text: '12423 H 30000', note: 'alternatif' },
+                ],
                 selectedSat: null,
                 visibleCount: 60,
                 copiedId: null,
@@ -267,9 +301,7 @@
                     this.loading = true;
                     this.error = '';
                     try {
-                        const response = await fetch(DATA_URL, { cache: 'no-cache' });
-                        if (!response.ok) throw new Error('Sunucu yanıtı: ' + response.status + ' ' + response.statusText);
-                        const raw = JSON.parse(decodeBase64Utf8(await response.text()));
+                        const raw = await CepteVeri.load();
                         this.satellites = this.prepare(raw);
                     } catch (e) {
                         console.error('Veri yüklenemedi:', e);
@@ -298,12 +330,13 @@
                                 _id: id++,
                             };
                             ch._search = normalize([ch.name, ch.frequency, ch.country, ch.encryption, ch.sid].join(' '));
+                            ch._cats = CepteKategori.detect(normalize(ch.name));
                             return ch;
                         });
                         const activeCount = prepared.filter(c => c.is_active).length;
                         total += prepared.length;
                         active += activeCount;
-                        return { name, ...splitSatelliteName(name), channels: prepared, activeCount, _search: normalize(name) };
+                        return { name, ...splitSatelliteName(name), orbit: UyduHesap.parseOrbitalPosition(name), channels: prepared, activeCount, _search: normalize(name) };
                     });
                     this.stats = { total, active };
                     // Arşiv grubu en sona, diğerleri alfabetik
@@ -329,9 +362,22 @@
                     let channels = this.selectedSat.channels;
                     if (this.statusFilter === 'active') channels = channels.filter(c => c.is_active);
                     else if (this.statusFilter === 'passive') channels = channels.filter(c => !c.is_active);
+                    if (this.categoryFilter) channels = channels.filter(c => c._cats.includes(this.categoryFilter));
 
                     const q = normalize(this.modalSearchQuery.trim());
                     return q ? channels.filter(c => c._search.includes(q)) : channels;
+                },
+
+                // Seçili uydu + durum filtresine göre kategori başına kanal sayısı
+                get categoryCounts() {
+                    const counts = {};
+                    if (!this.selectedSat) return counts;
+                    for (const c of this.selectedSat.channels) {
+                        if (this.statusFilter === 'active' && !c.is_active) continue;
+                        if (this.statusFilter === 'passive' && c.is_active) continue;
+                        for (const k of c._cats) counts[k] = (counts[k] || 0) + 1;
+                    }
+                    return counts;
                 },
 
                 // Çok kanallı uydularda tarayıcıyı kilitlememek için sayfalı gösterim
@@ -344,6 +390,7 @@
                     const q = this.searchQuery.trim();
                     this.modalSearchQuery = q && !sat._search.includes(normalize(q)) ? q : '';
                     this.statusFilter = 'all';
+                    this.categoryFilter = '';
                     this.visibleCount = this.PAGE_SIZE;
                     this.selectedSat = sat;
                     this.$nextTick(() => {
@@ -354,6 +401,12 @@
 
                 closeModal() {
                     this.selectedSat = null;
+                },
+
+                setCategory(key) {
+                    this.categoryFilter = key;
+                    this.visibleCount = this.PAGE_SIZE;
+                    this.$refs.modalBody.scrollTop = 0;
                 },
 
                 setStatus(status) {
@@ -367,12 +420,15 @@
                         .filter(Boolean).join(' ');
                 },
 
-                async copyTuning(ch) {
-                    const text = ch.name + ' — ' + ch.satellite + ' — ' + this.tuningText(ch);
+                copyTuning(ch) {
+                    return this.copyText(ch.name + ' — ' + ch.satellite + ' — ' + this.tuningText(ch), ch._id);
+                },
+
+                async copyText(text, id) {
                     try {
                         await navigator.clipboard.writeText(text);
-                        this.copiedId = ch._id;
-                        setTimeout(() => { if (this.copiedId === ch._id) this.copiedId = null; }, 1500);
+                        this.copiedId = id;
+                        setTimeout(() => { if (this.copiedId === id) this.copiedId = null; }, 1500);
                     } catch (e) {
                         console.warn('Panoya kopyalanamadı:', e);
                     }

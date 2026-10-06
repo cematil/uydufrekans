@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#06b6d4"/>
+      <stop offset="1" stop-color="#3b82f6"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#0b0f19"/>
+  <rect x="56" y="56" width="400" height="400" rx="96" fill="url(#g)"/>
+  <!-- çanak -->
+  <path d="M150 190 a150 150 0 0 0 172 172 z" fill="#0b0f19"/>
+  <path d="M236 276 L330 182" stroke="#0b0f19" stroke-width="22" stroke-linecap="round"/>
+  <circle cx="338" cy="174" r="22" fill="#0b0f19"/>
+  <path d="M190 362 L170 410 L280 410 L258 362" fill="#0b0f19"/>
+  <!-- sinyal -->
+  <path d="M352 120 a60 60 0 0 1 40 40" stroke="#0b0f19" stroke-width="16" fill="none" stroke-linecap="round"/>
+  <path d="M356 80 a100 100 0 0 1 76 76" stroke="#0b0f19" stroke-width="16" fill="none" stroke-linecap="round"/>
+</svg>
