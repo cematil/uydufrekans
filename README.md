@@ -16,7 +16,7 @@
 | Pusula | `pusula.html` | Gerçek kuzeye göre pusula, seçili uydunun yönü ve "sağa/sola dön" yönlendirmesi |
 | Su Terazisi | `terazi.html` | Direk/ayak için kabarcıklı terazi (kalibrasyonlu) ve çanak kolu için açı ölçer |
 | Şebeke Frekansları | `sebeke.html` | Her uydunun şebeke arama (NIT) ve ana transponder frekansları (`sebeke-frekanslari.json`, GitHub'dan güncellenir); resmi frekansı olmayan uydular için veriden hesaplanan en çok kanallı transponderlar |
-| Frekans Rehberi | `kanallar.html` | 78 uydu, 29.110 kayıt; arama, aktif/pasif ve kategori filtresi, TKGS frekansı, ayar bilgisini kopyalama |
+| Frekans Rehberi | `kanallar.html` | 77 uydu, 9.614 aktif kanal; arama ve kategori filtresi, TKGS frekansı, ayar bilgisini kopyalama |
 | Alan Hesaplama | `alan.html` | Haritada arazi/çatı alanı (m², dönüm/acre, hektar) ve çevre |
 | Gizlilik | `gizlilik.html` | Play Store için iki dilli gizlilik politikası |
 

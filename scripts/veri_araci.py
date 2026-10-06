@@ -21,7 +21,7 @@ import sys
 from collections import OrderedDict
 
 VARSAYILAN_ENC = "uydulara_gore_kanallar.enc"
-PASIF_GRUP = "Pasif / Eski Yayınlar"
+PASIF_GRUP = "Pasif / Eski Yayınlar"  # eski sürümlerdeki arşiv grubu; temizle komutu siler
 SURUM_DOSYASI = "veri-surum.json"
 
 
@@ -159,7 +159,9 @@ POLARIZASYON = {"L": "Left (Sol)", "R": "Right (Sağ)", "H": "Horizontal (Yatay)
 def temizle(veri):
     yeni = OrderedDict()
     for grup, kanallar in veri.items():
-        grup_adi = grup if grup == PASIF_GRUP else uydu_adi(grup)
+        if grup == PASIF_GRUP:
+            continue  # yayın dışı / frekanssız eski kayıtlar tutulmaz
+        grup_adi = uydu_adi(grup)
         hedef = yeni.setdefault(grup_adi, [])
         for k in kanallar:
             k = OrderedDict(k)

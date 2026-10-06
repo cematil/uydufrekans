@@ -14,7 +14,6 @@
     const DATA_FILE = 'uydulara_gore_kanallar.enc';
     const GLOBAL_POSITIONS_FILE = 'uydu-konumlari.json'; // dünya genelindeki uydu konumları (frekanssız)
     const META_FILE = 'veri-surum.json';
-    const ARCHIVE_GROUP = 'Pasif / Eski Yayınlar';
     // Verinin okunacağı GitHub deposu ve dalı
     const GITHUB_RAW = 'https://raw.githubusercontent.com/cematil/uydufrekans/main/';
     const CACHE_NAME = 'cepteuydu-veri';
@@ -263,7 +262,7 @@
     }
 
     root.CepteVeri = {
-        DATA_FILE, ARCHIVE_GROUP, GITHUB_RAW, FALLBACK_POSITIONS,
+        DATA_FILE, GITHUB_RAW, FALLBACK_POSITIONS,
         normalize, decodeBase64Utf8, load, loadWithInfo, positionsFrom, loadPositions, registerServiceWorker,
         loadNetworkFile, loadJsonFile, scanSuggestions, loadNetworks,
     };

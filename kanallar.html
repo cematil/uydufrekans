@@ -63,7 +63,7 @@
         </div>
 
         <div x-show="!loading && !error" x-cloak class="space-y-4">
-            <div class="grid grid-cols-3 gap-3">
+            <div class="grid grid-cols-2 gap-3">
                 <div class="card p-3 text-center">
                     <div class="text-xl sm:text-2xl font-bold text-navy-800" x-text="fmtInt(filteredSatellites.length)"></div>
                     <div class="text-[11px] text-ink-500" x-text="t('ch.statSats')"></div>
@@ -72,10 +72,6 @@
                     <div class="text-xl sm:text-2xl font-bold text-emerald-600" x-text="fmtInt(stats.active)"></div>
                     <div class="text-[11px] text-ink-500" x-text="t('ch.statActive')"></div>
                 </div>
-                <div class="card p-3 text-center">
-                    <div class="text-xl sm:text-2xl font-bold text-ink-700" x-text="fmtInt(stats.total)"></div>
-                    <div class="text-[11px] text-ink-500" x-text="t('ch.statTotal')"></div>
-                </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -83,12 +79,11 @@
                     <div class="card p-4 flex items-center gap-3">
                         <button type="button" @click="openModal(sat)" class="flex-1 min-w-0 text-left flex items-center gap-3">
                             <div class="w-14 h-14 rounded-xl bg-lav-100 text-navy-800 flex flex-col items-center justify-center shrink-0">
-                                <i class="fa-solid fa-satellite text-sm" x-show="sat.position"></i>
-                                <i class="fa-solid fa-box-archive text-sm" x-show="!sat.position"></i>
-                                <span class="text-[10px] font-bold mt-0.5" x-text="sat.position || t('ch.archive')"></span>
+                                <i class="fa-solid fa-satellite text-sm"></i>
+                                <span class="text-[10px] font-bold mt-0.5" x-text="sat.position"></span>
                             </div>
                             <div class="min-w-0">
-                                <div class="font-semibold truncate" x-text="sat.position ? sat.title : t('ch.archiveTitle')"></div>
+                                <div class="font-semibold truncate" x-text="sat.title"></div>
                                 <div class="text-xs text-ink-500">
                                     <span x-text="t('ch.records', { n: fmtInt(sat.channels.length) })"></span>
                                     <span x-show="sat.activeCount > 0" class="text-emerald-600" x-text="' · ' + t('ch.activeN', { n: fmtInt(sat.activeCount) })"></span>
@@ -117,7 +112,7 @@
                 <div class="flex items-center gap-2 px-2 h-14">
                     <button type="button" @click="closeModal()" class="hdr-btn" :aria-label="t('common.close')"><i class="fa-solid fa-arrow-left sm:hidden"></i><i class="fa-solid fa-xmark hidden sm:block"></i></button>
                     <div class="flex-1 min-w-0">
-                        <div class="font-semibold truncate" x-text="selectedSat?.position ? selectedSat?.name : t('ch.archiveTitle')"></div>
+                        <div class="font-semibold truncate" x-text="selectedSat?.name"></div>
                         <div class="text-[11px] text-white/70" x-text="t('ch.listing', { n: fmtInt(modalFilteredChannels.length) })"></div>
                     </div>
                 </div>
@@ -125,7 +120,7 @@
 
             <div class="p-3 sm:p-4 space-y-3 bg-white border-b border-slate-100">
                 <div class="flex flex-col sm:flex-row gap-2">
-                    <div class="flex bg-surface p-1 rounded-xl text-xs w-full sm:w-auto">
+                    <div x-show="(selectedSat?.channels.length || 0) > (selectedSat?.activeCount || 0)" class="flex bg-surface p-1 rounded-xl text-xs w-full sm:w-auto">
                         <button type="button" @click="setStatus('all')" :class="statusFilter === 'all' ? 'bg-white shadow text-navy-800 font-bold' : 'text-ink-500'" class="px-3 py-1.5 rounded-lg flex-1 sm:flex-none" x-text="t('ch.all')"></button>
                         <button type="button" @click="setStatus('active')" :class="statusFilter === 'active' ? 'bg-white shadow text-emerald-700 font-bold' : 'text-ink-500'" class="px-3 py-1.5 rounded-lg flex-1 sm:flex-none" x-text="t('ch.active') + ' (' + fmtInt(selectedSat?.activeCount || 0) + ')'"></button>
                         <button type="button" @click="setStatus('passive')" :class="statusFilter === 'passive' ? 'bg-white shadow text-rose-700 font-bold' : 'text-ink-500'" class="px-3 py-1.5 rounded-lg flex-1 sm:flex-none" x-text="t('ch.passive') + ' (' + fmtInt((selectedSat?.channels.length || 0) - (selectedSat?.activeCount || 0)) + ')'"></button>
@@ -200,7 +195,7 @@
 
     <script>
         CepteVeri.registerServiceWorker();
-        const { ARCHIVE_GROUP, normalize } = CepteVeri;
+        const { normalize } = CepteVeri;
         const POL_SHORT = { 'Horizontal (Yatay)': 'H', 'Vertical (Dikey)': 'V', 'Left (Sol)': 'L', 'Right (Sağ)': 'R' };
 
         // "Türksat 4A (42.0°E)" -> { title: "Türksat 4A", position: "42.0°E" }
@@ -279,9 +274,8 @@
                         return { name, ...splitSatelliteName(name), orbit: UyduHesap.parseOrbitalPosition(name), channels: prepared, activeCount, _search: normalize(name) };
                     });
                     this.stats = { total, active };
-                    // Arşiv grubu en sona, diğerleri doğudan batıya
+                    // Doğudan batıya
                     return list.sort((a, b) =>
-                        (a.name === ARCHIVE_GROUP) - (b.name === ARCHIVE_GROUP) ||
                         (b.orbit ?? 0) - (a.orbit ?? 0) ||
                         a.name.localeCompare(b.name, 'tr', { numeric: true }));
                 },
