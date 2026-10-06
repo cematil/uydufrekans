@@ -5,7 +5,7 @@
  *  - Harita karoları (OpenStreetMap): önbellekten ver, arka planda tazele (son görülen bölge çevrimdışı da açılır)
  * Not: Uygulama içi veri güncellemesi (GitHub) js/veri.js'te ayrıca yönetilir.
  */
-const VERSION = 'cepteuydu-v3';
+const VERSION = 'cepteuydu-v4';
 const APP_SHELL = [
     './',
     'index.html',
@@ -17,6 +17,7 @@ const APP_SHELL = [
     'terazi.html',
     'alan.html',
     'gizlilik.html',
+    'sebeke.html',
     'css/app.css',
     'js/dil.js',
     'js/ortak.js',
@@ -38,6 +39,7 @@ const APP_SHELL = [
     'icons/icon-512.png',
     'manifest.webmanifest',
     'veri-surum.json',
+    'sebeke-frekanslari.json',
 ];
 const DATA_FILE = 'uydulara_gore_kanallar.enc';
 
@@ -91,7 +93,7 @@ self.addEventListener('fetch', event => {
     const url = new URL(request.url);
 
     if (url.origin === self.location.origin) {
-        if (url.pathname.endsWith(DATA_FILE) || url.pathname.endsWith('veri-surum.json') || request.mode === 'navigate') {
+        if (url.pathname.endsWith(DATA_FILE) || url.pathname.endsWith('veri-surum.json') || url.pathname.endsWith('sebeke-frekanslari.json') || request.mode === 'navigate') {
             event.respondWith(networkFirst(request));
         } else {
             event.respondWith(staleWhileRevalidate(request));

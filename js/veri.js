@@ -147,6 +147,86 @@
         try { return positionsFrom(await load()); } catch (e) { return FALLBACK_POSITIONS.slice(); }
     }
 
+    // ---------------- Şebeke / tarama frekansları ----------------
+    const NETWORK_FILE = 'sebeke-frekanslari.json';
+    const POL_SHORT = { 'Horizontal (Yatay)': 'H', 'Vertical (Dikey)': 'V', 'Left (Sol)': 'L', 'Right (Sağ)': 'R' };
+
+    /** sebeke-frekanslari.json: önce GitHub, sonra cihazdaki kopya, sonra uygulama içi kopya */
+    async function loadNetworkFile() {
+        const cache = await openCache();
+        try {
+            const res = await fetchWithTimeout(GITHUB_RAW + NETWORK_FILE, 6000, { cache: 'no-store' });
+            const json = await res.json();
+            if (cache) await cache.put(NETWORK_FILE, new Response(JSON.stringify(json), { headers: { 'Content-Type': 'application/json' } }));
+            return json;
+        } catch (e) { /* çevrimdışı veya dosya henüz main'de yok */ }
+        try {
+            const cached = cache && await cache.match(NETWORK_FILE);
+            if (cached) return await cached.json();
+        } catch (e) { /* yok say */ }
+        try { return await (await fetch(NETWORK_FILE)).json(); } catch (e) { return { uydular: [] }; }
+    }
+
+    /**
+     * Yörünge konumu başına en çok aktif kanal taşıyan transponderlar.
+     * Şebeke araması açıkken bu frekanslardan biriyle tarama yapmak çoğu operatörde tüm listeyi getirir.
+     */
+    function scanSuggestions(raw, perPosition = 3) {
+        const byLon = new Map();
+        for (const [name, channels] of Object.entries(raw)) {
+            const lon = root.UyduHesap.parseOrbitalPosition(name);
+            if (lon === null) continue;
+            if (!byLon.has(lon)) byLon.set(lon, new Map());
+            const tps = byLon.get(lon);
+            for (const c of channels) {
+                if (!c.is_active || !c.frequency) continue;
+                const f = Math.round(parseFloat(String(c.frequency).replace(',', '.')));
+                const pol = POL_SHORT[c.polarization] || c.polarization;
+                if (!Number.isFinite(f) || !pol) continue;
+                const key = f + pol + c.symbol_rate;
+                const tp = tps.get(key) || { f: String(f), pol, sr: c.symbol_rate, fec: c.fec, sat: name.replace(/\s*\([^)]*\)\s*$/, ''), count: 0 };
+                tp.count++;
+                tps.set(key, tp);
+            }
+        }
+        const out = new Map();
+        for (const [lon, tps] of byLon) {
+            out.set(lon, [...tps.values()].sort((a, b) => b.count - a.count).slice(0, perPosition));
+        }
+        return out;
+    }
+
+    /** Tüm konumlar için şebeke (resmi) ve önerilen tarama frekansları */
+    async function loadNetworks() {
+        const [raw, file] = await Promise.all([load().catch(() => ({})), loadNetworkFile()]);
+        const positions = Object.keys(raw).length ? positionsFrom(raw) : FALLBACK_POSITIONS.slice();
+        const suggested = scanSuggestions(raw);
+        const official = new Map((file.uydular || []).map(u => [Number(u.konum), u]));
+        const near = (a, b) => a.pol === b.pol && Math.abs(Number(a.f) - Number(b.f)) <= 2;
+        return positions.map(p => {
+            const off = official.get(p.lon);
+            const list = off ? off.frekanslar.slice() : [];
+            const sug = (suggested.get(p.lon) || []).filter(s => !list.some(o => near(o, s)));
+            return { lon: p.lon, label: p.label, names: p.names, title: p.names.join(', '), official: list, suggested: sug };
+        });
+    }
+
+    // Görünüm yardımcıları: "12380 V 27500" ve açıklama satırı
+    const CepteSebeke = {
+        text: tp => [tp.f, tp.pol, tp.sr].filter(Boolean).join(' '),
+        note: tp => {
+            const t = root.t;
+            const fec = tp.fec ? ' · FEC ' + tp.fec : '';
+            if (tp.tur === 'sebeke' || tp.tur === 'ana') {
+                const label = t(tp.tur === 'sebeke' ? 'net.badgeNetwork' : 'net.badgeMain');
+                const note = (root.currentLang() === 'en' ? tp.not_en : tp.not_tr) || '';
+                return label + (note ? ' · ' + note : '') + fec;
+            }
+            return t('net.suggestedNote', { n: tp.count, sat: tp.sat }) + fec;
+        },
+    };
+    root.CepteSebeke = CepteSebeke;
+
     function registerServiceWorker() {
         // Uygulama (Capacitor) içinde dosyalar zaten cihazda; service worker yalnızca web için.
         if (root.Capacitor && root.Capacitor.isNativePlatform && root.Capacitor.isNativePlatform()) return;
@@ -158,5 +238,6 @@
     root.CepteVeri = {
         DATA_FILE, ARCHIVE_GROUP, GITHUB_RAW, FALLBACK_POSITIONS,
         normalize, decodeBase64Utf8, load, loadWithInfo, positionsFrom, loadPositions, registerServiceWorker,
+        loadNetworkFile, scanSuggestions, loadNetworks,
     };
 })(window);

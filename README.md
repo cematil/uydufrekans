@@ -15,6 +15,7 @@
 | Konumum | `konum.html` | GPS koordinatı (ondalık + derece/dakika), doğruluk, rakım, paylaşma; buradan görünen tüm uydular |
 | Pusula | `pusula.html` | Gerçek kuzeye göre pusula, seçili uydunun yönü ve "sağa/sola dön" yönlendirmesi |
 | Su Terazisi | `terazi.html` | Direk/ayak için kabarcıklı terazi (kalibrasyonlu) ve çanak kolu için açı ölçer |
+| Şebeke Frekansları | `sebeke.html` | Her uydunun şebeke arama (NIT) ve ana transponder frekansları (`sebeke-frekanslari.json`, GitHub'dan güncellenir); resmi frekansı olmayan uydular için veriden hesaplanan en çok kanallı transponderlar |
 | Frekans Rehberi | `kanallar.html` | 78 uydu, 29.110 kayıt; arama, aktif/pasif ve kategori filtresi, TKGS frekansı, ayar bilgisini kopyalama |
 | Alan Hesaplama | `alan.html` | Haritada arazi/çatı alanı (m², dönüm/acre, hektar) ve çevre |
 | Gizlilik | `gizlilik.html` | Play Store için iki dilli gizlilik politikası |
@@ -32,6 +33,18 @@ python3 scripts/veri_araci.py kodla      # kanallar.json -> .enc  (+ veri-surum.
 python3 scripts/veri_araci.py temizle    # Uydu/ülke/şifreleme adlarını standartlaştırır (+ veri-surum.json)
 python3 scripts/veri_araci.py surum      # Yalnızca veri-surum.json'u yeniler
 ```
+
+### Şebeke frekansı eklemek
+
+`sebeke-frekanslari.json` dosyasına uydunun yörünge konumuyla (`konum`, Batı için negatif) bir kayıt ekleyin:
+
+```json
+{ "konum": 13.0, "ad": "Hot Bird", "frekanslar": [
+  { "f": "11034", "pol": "V", "sr": "27500", "fec": "3/4", "tur": "sebeke", "not_tr": "Şebeke araması", "not_en": "Network search" }
+] }
+```
+
+`tur`: `sebeke` (şebeke arama frekansı) veya `ana` (ana yayın transponderi). `main` dalına gönderildiğinde uygulamalar yeni listeyi bir sonraki açılışta alır.
 
 ## 🛠️ Teknoloji
 
@@ -63,7 +76,7 @@ uydufrekans/
 ├── docs/GOOGLE_PLAY.md       # Play Store'a yükleme rehberi
 ├── scripts/                  # Veri aracı, derleme, dil kontrolü, simge üretimi
 ├── sw.js, manifest.webmanifest
-├── uydulara_gore_kanallar.enc, veri-surum.json
+├── uydulara_gore_kanallar.enc, veri-surum.json, sebeke-frekanslari.json
 └── .github/workflows/android.yml  # Her gönderimde APK + AAB derler
 ```
 

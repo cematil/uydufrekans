@@ -164,6 +164,7 @@
         ['pusula.html', 'fa-compass', 'nav.compass'],
         ['terazi.html', 'fa-ruler-horizontal', 'nav.level'],
         ['kanallar.html', 'fa-list-ul', 'nav.channels'],
+        ['sebeke.html', 'fa-tower-broadcast', 'nav.network'],
         ['alan.html', 'fa-draw-polygon', 'nav.area'],
         ['gizlilik.html', 'fa-shield-halved', 'nav.privacy'],
     ];

@@ -1,0 +1,81 @@
+{
+  "aciklama": "Uyduların şebeke arama (NIT) ve ana transponder frekansları. Uygulama bu dosyayı GitHub'daki main dalından okur; düzenleyip gönderdiğinizde kullanıcılara Play Store güncellemesi olmadan ulaşır. tur: 'sebeke' = resmi/yaygın şebeke arama frekansı, 'ana' = operatörün ana yayın transponderi. Listede olmayan uydular için uygulama, veri dosyasındaki en çok kanallı transponderları 'önerilen tarama frekansı' olarak kendisi hesaplar.",
+  "surum": "2026-10-06",
+  "uydular": [
+    {
+      "konum": 42.0,
+      "ad": "Türksat 4A / 5B / 6A",
+      "frekanslar": [
+        {
+          "f": "12380",
+          "pol": "V",
+          "sr": "27500",
+          "fec": "3/4",
+          "tur": "sebeke",
+          "not_tr": "TKGS / şebeke araması",
+          "not_en": "TKGS / network search"
+        },
+        {
+          "f": "12423",
+          "pol": "H",
+          "sr": "30000",
+          "fec": "3/4",
+          "tur": "sebeke",
+          "not_tr": "Alternatif şebeke araması",
+          "not_en": "Alternative network search"
+        },
+        {
+          "f": "11794",
+          "pol": "V",
+          "sr": "30000",
+          "fec": "3/4",
+          "tur": "ana",
+          "not_tr": "TRT Türkiye kapsama 1",
+          "not_en": "TRT Turkey beam 1"
+        },
+        {
+          "f": "11958",
+          "pol": "V",
+          "sr": "27500",
+          "fec": "5/6",
+          "tur": "ana",
+          "not_tr": "TRT Türkiye kapsama 2",
+          "not_en": "TRT Turkey beam 2"
+        },
+        {
+          "f": "12226",
+          "pol": "V",
+          "sr": "27500",
+          "fec": "3/4",
+          "tur": "ana",
+          "not_tr": "TRT Batı kapsama",
+          "not_en": "TRT West beam"
+        },
+        {
+          "f": "12092",
+          "pol": "H",
+          "sr": "27500",
+          "fec": "5/6",
+          "tur": "ana",
+          "not_tr": "TRT Doğu kapsama",
+          "not_en": "TRT East beam"
+        }
+      ]
+    },
+    {
+      "konum": -7.0,
+      "ad": "Nilesat 201 / 301",
+      "frekanslar": [
+        {
+          "f": "11747",
+          "pol": "V",
+          "sr": "27500",
+          "fec": "5/6",
+          "tur": "sebeke",
+          "not_tr": "Nilesat ana şebeke",
+          "not_en": "Nilesat home network"
+        }
+      ]
+    }
+  ]
+}

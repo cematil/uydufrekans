@@ -45,6 +45,9 @@
                     </button>
                 </template>
             </div>
+            <a href="sebeke.html" class="inline-flex items-center gap-1 text-sm font-semibold text-lav-600 mt-3">
+                <i class="fa-solid fa-tower-broadcast"></i><span x-text="t('net.allLink')"></span><i class="fa-solid fa-chevron-right text-xs"></i>
+            </a>
         </div>
 
         <div x-show="loading" class="text-center py-16 text-ink-500">
@@ -133,6 +136,18 @@
                         <input type="search" x-ref="modalSearch" x-model.debounce.200ms="modalSearchQuery" @input="visibleCount = PAGE_SIZE" :placeholder="t('ch.searchIn')" class="field pl-8 py-2">
                     </label>
                 </div>
+                <!-- Bu uydunun şebeke / tarama frekansları -->
+                <div x-show="selectedNet.length" class="flex items-center gap-2 overflow-x-auto pb-1 -mb-1">
+                    <span class="text-[11px] font-bold text-ink-500 shrink-0"><i class="fa-solid fa-tower-broadcast mr-1"></i><span x-text="t('net.short')"></span></span>
+                    <template x-for="(tp, i) in selectedNet" :key="i">
+                        <button type="button" @click="copyText(CepteSebeke.text(tp), 'net' + i)" :title="CepteSebeke.note(tp)"
+                                class="shrink-0 font-mono text-xs font-bold px-2.5 py-1.5 rounded-lg border"
+                                :class="tp.tur === 'sebeke' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : tp.tur === 'ana' ? 'bg-sky-50 border-sky-200 text-sky-800' : 'bg-lav-50 border-lav-100 text-navy-800'">
+                            <span x-text="CepteSebeke.text(tp)"></span>
+                            <i class="ml-1" :class="copiedId === 'net' + i ? 'fa-solid fa-check' : 'fa-regular fa-copy opacity-50'"></i>
+                        </button>
+                    </template>
+                </div>
                 <div class="flex gap-2 overflow-x-auto pb-1 -mb-1" :title="t('ch.catHint')">
                     <button type="button" @click="setCategory('')" class="chip" :class="categoryFilter === '' ? 'chip-on' : 'chip-off'" x-text="t('ch.allCats')"></button>
                     <template x-for="cat in categories" :key="cat.key">
@@ -213,6 +228,7 @@
                 visibleCount: 60,
                 copiedId: null,
                 satellites: [],
+                networks: [],
                 stats: { total: 0, active: 0 },
 
                 init() {
@@ -226,6 +242,7 @@
                     try {
                         const raw = await CepteVeri.load({ onStatus: k => { this.statusKey = k; } });
                         this.satellites = this.prepare(raw);
+                        CepteVeri.loadNetworks().then(n => { this.networks = n; });
                     } catch (e) {
                         console.error('Veri yüklenemedi:', e);
                         this.error = e.message || String(e);
@@ -322,6 +339,11 @@
                 },
 
                 closeModal() { this.selectedSat = null; },
+
+                get selectedNet() {
+                    const n = this.selectedSat && this.networks.find(x => x.lon === this.selectedSat.orbit);
+                    return n ? n.official.concat(n.suggested) : [];
+                },
 
                 setCategory(key) {
                     this.categoryFilter = key;

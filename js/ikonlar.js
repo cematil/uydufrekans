@@ -63,6 +63,13 @@
             <path d="M46 6c-5 0-8.5 3.6-8.5 8 0 6 8.5 13 8.5 13s8.5-7 8.5-13c0-4.4-3.5-8-8.5-8z" fill="#e94b4b"/>
             <circle cx="46" cy="14" r="3" fill="#fff"/>
         </svg>`,
+        network: `<svg viewBox="0 0 64 64" aria-hidden="true">
+            <path d="M32 26 22 58h20z" fill="none" stroke="#1f2a44" stroke-width="3" stroke-linejoin="round"/>
+            <path d="M26 44h12M24 51h16" stroke="#1f2a44" stroke-width="2.5"/>
+            <circle cx="32" cy="22" r="5" fill="#2f9e57"/>
+            <path d="M22 14a14 14 0 0 0 0 16M42 14a14 14 0 0 1 0 16" stroke="#2f9e57" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <path d="M15 8a23 23 0 0 0 0 28M49 8a23 23 0 0 1 0 28" stroke="#7bd389" stroke-width="3" fill="none" stroke-linecap="round"/>
+        </svg>`,
         ar: `<svg viewBox="0 0 64 64" aria-hidden="true">
             <rect x="18" y="6" width="28" height="52" rx="5" fill="#1f2a44"/>
             <rect x="21" y="11" width="22" height="40" rx="2" fill="#5bc0eb"/>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Uydulara göre şebeke arama (NIT) frekansları ve önerilen tarama frekansları. Network search frequencies by satellite.">
+    <meta name="theme-color" content="#282660">
+    <title>CepteUydu</title>
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/app.css">
+    <script src="js/dil.js"></script>
+    <script src="js/ortak.js"></script>
+    <script src="js/uydu-hesap.js"></script>
+    <script src="js/veri.js"></script>
+    <script defer src="vendor/alpine.min.js"></script>
+</head>
+<body x-data="networkPage()">
+    <cu-header title-key="nav.network" back></cu-header>
+
+    <main class="page space-y-4">
+        <!-- Nasıl yapılır -->
+        <details class="card p-4" :open="!seenHelp" @toggle="markHelp()">
+            <summary class="font-semibold cursor-pointer flex items-center gap-2">
+                <i class="fa-solid fa-circle-question text-lav-500"></i><span x-text="t('net.howTitle')"></span>
+            </summary>
+            <ol class="list-decimal pl-5 mt-3 space-y-1.5 text-sm text-ink-700">
+                <li x-text="t('net.step1')"></li>
+                <li x-text="t('net.step2')"></li>
+                <li x-text="t('net.step3')"></li>
+                <li x-text="t('net.step4')"></li>
+            </ol>
+            <div class="flex flex-wrap gap-3 mt-3 text-xs">
+                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span><span x-text="t('net.legendNetwork')"></span></span>
+                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span><span x-text="t('net.legendMain')"></span></span>
+                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-lav-400"></span><span x-text="t('net.legendSuggested')"></span></span>
+            </div>
+        </details>
+
+        <label class="relative block">
+            <span class="sr-only" x-text="t('net.search')"></span>
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400"></i>
+            <input type="search" x-model.debounce.200ms="q" :placeholder="t('net.search')" class="field !bg-white shadow-card pl-10 py-3">
+        </label>
+
+        <div x-show="loading" class="text-center py-12 text-ink-500">
+            <i class="fa-solid fa-tower-broadcast fa-beat text-3xl text-lav-500 mb-3"></i>
+            <p x-text="t('data.loading')"></p>
+        </div>
+
+        <div x-show="!loading" x-cloak class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <template x-for="n in filtered" :key="n.lon">
+                <section class="card p-4" :class="n.official.length && 'ring-2 ring-emerald-200'">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-14 h-14 rounded-xl bg-lav-100 text-navy-800 flex flex-col items-center justify-center shrink-0">
+                            <i class="fa-solid fa-satellite text-sm"></i>
+                            <span class="text-[10px] font-bold mt-0.5" x-text="UyduHesap.formatOrbitalPosition(n.lon)"></span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-semibold truncate" x-text="n.title"></div>
+                            <div class="text-xs" :class="n.official.length ? 'text-emerald-700 font-semibold' : 'text-ink-500'"
+                                 x-text="n.official.some(o => o.tur === 'sebeke') ? t('net.hasNetwork') : t('net.onlySuggested')"></div>
+                        </div>
+                        <a :href="'hizala.html?konum=' + n.lon" class="w-10 h-10 rounded-full bg-surface hover:bg-lav-100 text-navy-800 flex items-center justify-center shrink-0" :title="t('ch.alignThis')">
+                            <i class="fa-solid fa-crosshairs"></i>
+                        </a>
+                    </div>
+                    <div class="space-y-2">
+                        <template x-for="(tp, i) in n.official.concat(n.suggested)" :key="i">
+                            <button type="button" @click="copy(tp, n.lon + '-' + i)" class="w-full flex items-center gap-3 rounded-xl px-3 py-2 text-left border transition-colors"
+                                    :class="tp.tur === 'sebeke' ? 'bg-emerald-50 border-emerald-200 hover:border-emerald-400' : tp.tur === 'ana' ? 'bg-sky-50 border-sky-200 hover:border-sky-400' : 'bg-lav-50 border-lav-100 hover:border-lav-400'">
+                                <span class="font-mono font-bold text-navy-800 text-[15px] whitespace-nowrap" x-text="tpText(tp)"></span>
+                                <span class="flex-1 min-w-0 text-[11px] leading-tight text-ink-500" x-text="tpNote(tp)"></span>
+                                <i class="text-xs shrink-0" :class="copied === n.lon + '-' + i ? 'fa-solid fa-check text-emerald-600' : 'fa-regular fa-copy text-ink-400'"></i>
+                            </button>
+                        </template>
+                        <p x-show="!n.official.length && !n.suggested.length" class="text-xs text-ink-400" x-text="t('net.none')"></p>
+                    </div>
+                </section>
+            </template>
+        </div>
+
+        <p class="text-[11px] text-ink-400 text-center" x-text="t('net.footer')"></p>
+    </main>
+
+    <script>
+        CepteVeri.registerServiceWorker();
+
+        function networkPage() {
+            return {
+                loading: true,
+                list: [],
+                q: '',
+                copied: null,
+                seenHelp: !!CepteDurum.get().seenNetHelp,
+
+                async init() {
+                    this.list = await CepteVeri.loadNetworks();
+                    this.loading = false;
+                },
+
+                // Resmi şebeke frekansı olan uydular önce, sonra doğudan batıya
+                get filtered() {
+                    const q = CepteVeri.normalize(this.q.trim());
+                    const list = q ? this.list.filter(n => CepteVeri.normalize(n.label + ' ' + n.title).includes(q)) : this.list;
+                    return list.slice().sort((a, b) => (b.official.length > 0) - (a.official.length > 0) || b.lon - a.lon);
+                },
+
+                tpText(tp) { return CepteSebeke.text(tp); },
+                tpNote(tp) { return CepteSebeke.note(tp); },
+
+                async copy(tp, id) {
+                    try {
+                        await navigator.clipboard.writeText(this.tpText(tp));
+                        this.copied = id;
+                        setTimeout(() => { if (this.copied === id) this.copied = null; }, 1500);
+                    } catch (e) { /* yok say */ }
+                },
+
+                markHelp() { if (!this.seenHelp) { this.seenHelp = true; CepteDurum.set({ seenNetHelp: true }); } },
+            };
+        }
+    </script>
+</body>
+</html>
