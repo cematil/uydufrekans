@@ -34,6 +34,13 @@ python3 scripts/veri_araci.py temizle    # Uydu/ülke/şifreleme adlarını stan
 python3 scripts/veri_araci.py surum      # Yalnızca veri-surum.json'u yeniler
 ```
 
+### Dünya geneli uydu konumları
+
+`uydu-konumlari.json`, dünya genelindeki 148 yerdurağan uydu konumunu (yalnızca uydu adı ve yörünge konumu, frekans yok) içerir.
+Uydu Bulucu, AR, pusula, harita ve "Konumum" ekranları bu listeyi kanal verisindeki konumlarla birleştirir.
+Böylece Amerika ve Asya-Pasifik'teki kullanıcılar da çanak açılarını hesaplayabilir.
+Liste, açık kaynak OpenPLi `satellites.xml` dosyasındaki uydu adlarından `scripts/konum_listesi.py` ile üretildi.
+
 ### Şebeke frekansı eklemek
 
 `sebeke-frekanslari.json` dosyasına uydunun yörünge konumuyla (`konum`, Batı için negatif) bir kayıt ekleyin:
@@ -76,7 +83,7 @@ uydufrekans/
 ├── docs/GOOGLE_PLAY.md       # Play Store'a yükleme rehberi
 ├── scripts/                  # Veri aracı, derleme, dil kontrolü, simge üretimi
 ├── sw.js, manifest.webmanifest
-├── uydulara_gore_kanallar.enc, veri-surum.json, sebeke-frekanslari.json
+├── uydulara_gore_kanallar.enc, veri-surum.json, sebeke-frekanslari.json, uydu-konumlari.json
 └── .github/workflows/android.yml  # Her gönderimde APK + AAB derler
 ```
 

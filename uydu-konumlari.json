@@ -1,0 +1,921 @@
+{
+ "aciklama": "Küresel yerdurağan uydu konumları (uydu bulucu, AR ve pusula için). Frekans içermez.",
+ "uydular": [
+  {
+   "konum": 180.0,
+   "adlar": [
+    "Intelsat 18"
+   ]
+  },
+  {
+   "konum": 172.0,
+   "adlar": [
+    "Eutelsat 172B"
+   ]
+  },
+  {
+   "konum": 169.0,
+   "adlar": [
+    "Horizons 3e"
+   ]
+  },
+  {
+   "konum": 166.0,
+   "adlar": [
+    "Intelsat 19"
+   ]
+  },
+  {
+   "konum": 162.0,
+   "adlar": [
+    "Superbird B3"
+   ]
+  },
+  {
+   "konum": 160.0,
+   "adlar": [
+    "Measat 3a",
+    "Koreasat 6"
+   ]
+  },
+  {
+   "konum": 159.0,
+   "adlar": [
+    "ABS 6"
+   ]
+  },
+  {
+   "konum": 156.0,
+   "adlar": [
+    "Optus 10"
+   ]
+  },
+  {
+   "konum": 154.0,
+   "adlar": [
+    "JCSAT 2B"
+   ]
+  },
+  {
+   "konum": 150.5,
+   "adlar": [
+    "BRIsat"
+   ]
+  },
+  {
+   "konum": 146.0,
+   "adlar": [
+    "Nusantara Satu"
+   ]
+  },
+  {
+   "konum": 145.0,
+   "adlar": [
+    "Express AMU7"
+   ]
+  },
+  {
+   "konum": 144.0,
+   "adlar": [
+    "JCSAT 144C"
+   ]
+  },
+  {
+   "konum": 140.0,
+   "adlar": [
+    "Express AM5"
+   ]
+  },
+  {
+   "konum": 138.0,
+   "adlar": [
+    "Telstar 18 Vantage"
+   ]
+  },
+  {
+   "konum": 134.0,
+   "adlar": [
+    "Apstar 6C"
+   ]
+  },
+  {
+   "konum": 131.9,
+   "adlar": [
+    "Vinasat 1/2"
+   ]
+  },
+  {
+   "konum": 130.5,
+   "adlar": [
+    "ChinaSat 6C"
+   ]
+  },
+  {
+   "konum": 128.5,
+   "adlar": [
+    "LaoSat 1"
+   ]
+  },
+  {
+   "konum": 128.0,
+   "adlar": [
+    "JCSAT 3A"
+   ]
+  },
+  {
+   "konum": 125.0,
+   "adlar": [
+    "ChinaSat 6D"
+   ]
+  },
+  {
+   "konum": 124.0,
+   "adlar": [
+    "JCSAT 4B"
+   ]
+  },
+  {
+   "konum": 122.0,
+   "adlar": [
+    "AsiaSat 9"
+   ]
+  },
+  {
+   "konum": 120.0,
+   "adlar": [
+    "AsiaSat 6",
+    "Thaicom 7"
+   ]
+  },
+  {
+   "konum": 119.1,
+   "adlar": [
+    "Bangladesh 1"
+   ]
+  },
+  {
+   "konum": 118.0,
+   "adlar": [
+    "Telkom 3S"
+   ]
+  },
+  {
+   "konum": 116.0,
+   "adlar": [
+    "Koreasat 6A/7"
+   ]
+  },
+  {
+   "konum": 115.5,
+   "adlar": [
+    "ChinaSat 6E"
+   ]
+  },
+  {
+   "konum": 113.0,
+   "adlar": [
+    "Koreasat 5A"
+   ]
+  },
+  {
+   "konum": 108.1,
+   "adlar": [
+    "SES 7/9",
+    "Merah Putih"
+   ]
+  },
+  {
+   "konum": 105.5,
+   "adlar": [
+    "AsiaSat 7"
+   ]
+  },
+  {
+   "konum": 103.0,
+   "adlar": [
+    "Express AMU3"
+   ]
+  },
+  {
+   "konum": 100.5,
+   "adlar": [
+    "AsiaSat 5"
+   ]
+  },
+  {
+   "konum": 98.0,
+   "adlar": [
+    "ChinaSat 11"
+   ]
+  },
+  {
+   "konum": 97.3,
+   "adlar": [
+    "G-Sat 9"
+   ]
+  },
+  {
+   "konum": 96.5,
+   "adlar": [
+    "Express 103"
+   ]
+  },
+  {
+   "konum": 95.0,
+   "adlar": [
+    "SES 8/12"
+   ]
+  },
+  {
+   "konum": 93.5,
+   "adlar": [
+    "G-Sat 15/17"
+   ]
+  },
+  {
+   "konum": 91.5,
+   "adlar": [
+    "Measat 3b/3d"
+   ]
+  },
+  {
+   "konum": 90.0,
+   "adlar": [
+    "Yamal 401"
+   ]
+  },
+  {
+   "konum": 88.0,
+   "adlar": [
+    "ST 2"
+   ]
+  },
+  {
+   "konum": 87.5,
+   "adlar": [
+    "ChinaSat 12"
+   ]
+  },
+  {
+   "konum": 86.5,
+   "adlar": [
+    "KazSat 2"
+   ]
+  },
+  {
+   "konum": 83.0,
+   "adlar": [
+    "G-Sat 10/24/30"
+   ]
+  },
+  {
+   "konum": 80.0,
+   "adlar": [
+    "Express 80"
+   ]
+  },
+  {
+   "konum": 78.5,
+   "adlar": [
+    "Thaicom 6/8"
+   ]
+  },
+  {
+   "konum": 76.5,
+   "adlar": [
+    "Apstar 7"
+   ]
+  },
+  {
+   "konum": 75.0,
+   "adlar": [
+    "ABS 2/2A"
+   ]
+  },
+  {
+   "konum": 72.1,
+   "adlar": [
+    "Intelsat 22"
+   ]
+  },
+  {
+   "konum": 70.5,
+   "adlar": [
+    "Eutelsat 70B"
+   ]
+  },
+  {
+   "konum": 68.5,
+   "adlar": [
+    "Intelsat 20/36"
+   ]
+  },
+  {
+   "konum": 66.0,
+   "adlar": [
+    "Intelsat 17"
+   ]
+  },
+  {
+   "konum": 65.0,
+   "adlar": [
+    "Amos 4"
+   ]
+  },
+  {
+   "konum": 62.0,
+   "adlar": [
+    "Intelsat 39"
+   ]
+  },
+  {
+   "konum": 58.5,
+   "adlar": [
+    "KazSat 3"
+   ]
+  },
+  {
+   "konum": 57.0,
+   "adlar": [
+    "NSS 12"
+   ]
+  },
+  {
+   "konum": 56.0,
+   "adlar": [
+    "Express AT2"
+   ]
+  },
+  {
+   "konum": 54.9,
+   "adlar": [
+    "G-Sat 16",
+    "Yamal 402"
+   ]
+  },
+  {
+   "konum": 53.0,
+   "adlar": [
+    "Express AM6"
+   ]
+  },
+  {
+   "konum": 52.5,
+   "adlar": [
+    "Al Yah 1"
+   ]
+  },
+  {
+   "konum": 52.0,
+   "adlar": [
+    "TurkmenÄlem",
+    "MonacoSat"
+   ]
+  },
+  {
+   "konum": 51.5,
+   "adlar": [
+    "Belintersat 1"
+   ]
+  },
+  {
+   "konum": 50.0,
+   "adlar": [
+    "Türksat 4B"
+   ]
+  },
+  {
+   "konum": 49.0,
+   "adlar": [
+    "Yamal 601"
+   ]
+  },
+  {
+   "konum": 46.0,
+   "adlar": [
+    "Azerspace 1"
+   ]
+  },
+  {
+   "konum": 45.1,
+   "adlar": [
+    "Azerspace 2",
+    "Intelsat 38"
+   ]
+  },
+  {
+   "konum": 42.5,
+   "adlar": [
+    "NigComSat 1R"
+   ]
+  },
+  {
+   "konum": 42.0,
+   "adlar": [
+    "Türksat 3A/4A/5B/6A"
+   ]
+  },
+  {
+   "konum": 40.0,
+   "adlar": [
+    "Express AM7"
+   ]
+  },
+  {
+   "konum": 39.0,
+   "adlar": [
+    "Hellas Sat 3/4"
+   ]
+  },
+  {
+   "konum": 38.2,
+   "adlar": [
+    "Paksat MM1"
+   ]
+  },
+  {
+   "konum": 36.0,
+   "adlar": [
+    "Eutelsat 36D",
+    "Express AMU1"
+   ]
+  },
+  {
+   "konum": 31.0,
+   "adlar": [
+    "Türksat 5A"
+   ]
+  },
+  {
+   "konum": 30.5,
+   "adlar": [
+    "Arabsat 5A/6A"
+   ]
+  },
+  {
+   "konum": 28.2,
+   "adlar": [
+    "Astra 2E/2F/2G"
+   ]
+  },
+  {
+   "konum": 26.0,
+   "adlar": [
+    "Badr 7/8",
+    "Es'hail 2"
+   ]
+  },
+  {
+   "konum": 25.5,
+   "adlar": [
+    "Es'hail 1"
+   ]
+  },
+  {
+   "konum": 23.5,
+   "adlar": [
+    "Astra 3C"
+   ]
+  },
+  {
+   "konum": 21.5,
+   "adlar": [
+    "Eutelsat 21B"
+   ]
+  },
+  {
+   "konum": 20.0,
+   "adlar": [
+    "Arabsat 5C"
+   ]
+  },
+  {
+   "konum": 19.2,
+   "adlar": [
+    "Astra 1N/1P"
+   ]
+  },
+  {
+   "konum": 17.0,
+   "adlar": [
+    "Amos 17"
+   ]
+  },
+  {
+   "konum": 16.0,
+   "adlar": [
+    "Eutelsat 16D"
+   ]
+  },
+  {
+   "konum": 13.0,
+   "adlar": [
+    "Hotbird 13F/13G"
+   ]
+  },
+  {
+   "konum": 10.0,
+   "adlar": [
+    "Eutelsat 10B"
+   ]
+  },
+  {
+   "konum": 9.0,
+   "adlar": [
+    "Eutelsat 9B",
+    "Ka-Sat 9A"
+   ]
+  },
+  {
+   "konum": 7.0,
+   "adlar": [
+    "Eutelsat 7C"
+   ]
+  },
+  {
+   "konum": 4.8,
+   "adlar": [
+    "Astra 4A",
+    "SES 5"
+   ]
+  },
+  {
+   "konum": 3.0,
+   "adlar": [
+    "Eutelsat 3B",
+    "Rascom QAF 1R"
+   ]
+  },
+  {
+   "konum": 1.9,
+   "adlar": [
+    "BulgariaSat 1"
+   ]
+  },
+  {
+   "konum": -0.8,
+   "adlar": [
+    "Thor 5/6/7",
+    "Intelsat 10-02"
+   ]
+  },
+  {
+   "konum": -3.0,
+   "adlar": [
+    "ABS 3A"
+   ]
+  },
+  {
+   "konum": -4.0,
+   "adlar": [
+    "Dror 1"
+   ]
+  },
+  {
+   "konum": -5.0,
+   "adlar": [
+    "Eutelsat 5 West B"
+   ]
+  },
+  {
+   "konum": -7.0,
+   "adlar": [
+    "Nilesat 201/301",
+    "Eutelsat 7 West A"
+   ]
+  },
+  {
+   "konum": -8.0,
+   "adlar": [
+    "Eutelsat 8 West B"
+   ]
+  },
+  {
+   "konum": -14.0,
+   "adlar": [
+    "Express AM8"
+   ]
+  },
+  {
+   "konum": -15.0,
+   "adlar": [
+    "Telstar 12 Vantage"
+   ]
+  },
+  {
+   "konum": -18.0,
+   "adlar": [
+    "Intelsat 37e"
+   ]
+  },
+  {
+   "konum": -22.0,
+   "adlar": [
+    "SES 4"
+   ]
+  },
+  {
+   "konum": -24.5,
+   "adlar": [
+    "Alcomsat 1"
+   ]
+  },
+  {
+   "konum": -30.0,
+   "adlar": [
+    "Hispasat 30W-5/30W-6"
+   ]
+  },
+  {
+   "konum": -34.5,
+   "adlar": [
+    "Intelsat 35e"
+   ]
+  },
+  {
+   "konum": -37.5,
+   "adlar": [
+    "NSS 10",
+    "Telstar 11N"
+   ]
+  },
+  {
+   "konum": -40.5,
+   "adlar": [
+    "SES 6"
+   ]
+  },
+  {
+   "konum": -43.1,
+   "adlar": [
+    "Sky Brasil 1"
+   ]
+  },
+  {
+   "konum": -45.0,
+   "adlar": [
+    "Intelsat 14"
+   ]
+  },
+  {
+   "konum": -47.5,
+   "adlar": [
+    "SES 14"
+   ]
+  },
+  {
+   "konum": -53.0,
+   "adlar": [
+    "Intelsat 23"
+   ]
+  },
+  {
+   "konum": -55.5,
+   "adlar": [
+    "Intelsat 34"
+   ]
+  },
+  {
+   "konum": -58.0,
+   "adlar": [
+    "Intelsat 21"
+   ]
+  },
+  {
+   "konum": -61.0,
+   "adlar": [
+    "Amazonas 3/5",
+    "Nexus"
+   ]
+  },
+  {
+   "konum": -61.5,
+   "adlar": [
+    "EchoStar 16"
+   ]
+  },
+  {
+   "konum": -63.0,
+   "adlar": [
+    "Telstar 19 Vantage"
+   ]
+  },
+  {
+   "konum": -65.1,
+   "adlar": [
+    "Eutelsat 65 West A"
+   ]
+  },
+  {
+   "konum": -67.0,
+   "adlar": [
+    "SES 10"
+   ]
+  },
+  {
+   "konum": -70.0,
+   "adlar": [
+    "Star One C4",
+    "D2"
+   ]
+  },
+  {
+   "konum": -71.8,
+   "adlar": [
+    "Arsat 1"
+   ]
+  },
+  {
+   "konum": -72.7,
+   "adlar": [
+    "Nimiq 5"
+   ]
+  },
+  {
+   "konum": -73.9,
+   "adlar": [
+    "Hispasat 74W-1"
+   ]
+  },
+  {
+   "konum": -75.0,
+   "adlar": [
+    "Star One C3"
+   ]
+  },
+  {
+   "konum": -77.0,
+   "adlar": [
+    "QuetzSat 1"
+   ]
+  },
+  {
+   "konum": -78.8,
+   "adlar": [
+    "Sky Mexico 1"
+   ]
+  },
+  {
+   "konum": -81.0,
+   "adlar": [
+    "Arsat 2"
+   ]
+  },
+  {
+   "konum": -84.0,
+   "adlar": [
+    "Star One D1"
+   ]
+  },
+  {
+   "konum": -87.1,
+   "adlar": [
+    "SES 2",
+    "TKSat 1"
+   ]
+  },
+  {
+   "konum": -89.0,
+   "adlar": [
+    "Galaxy 36"
+   ]
+  },
+  {
+   "konum": -91.0,
+   "adlar": [
+    "Galaxy 32",
+    "Nimiq 6"
+   ]
+  },
+  {
+   "konum": -93.1,
+   "adlar": [
+    "Galaxy 35"
+   ]
+  },
+  {
+   "konum": -97.0,
+   "adlar": [
+    "Galaxy 19"
+   ]
+  },
+  {
+   "konum": -99.1,
+   "adlar": [
+    "Galaxy 16",
+    "T11",
+    "T14"
+   ]
+  },
+  {
+   "konum": -100.9,
+   "adlar": [
+    "T16",
+    "SES 1"
+   ]
+  },
+  {
+   "konum": -102.9,
+   "adlar": [
+    "T12",
+    "SES 18"
+   ]
+  },
+  {
+   "konum": -105.0,
+   "adlar": [
+    "EchoStar 105",
+    "SES 11"
+   ]
+  },
+  {
+   "konum": -107.3,
+   "adlar": [
+    "Anik F1R",
+    "G1"
+   ]
+  },
+  {
+   "konum": -110.0,
+   "adlar": [
+    "EchoStar 10/11"
+   ]
+  },
+  {
+   "konum": -114.9,
+   "adlar": [
+    "Eutelsat 115 West B"
+   ]
+  },
+  {
+   "konum": -116.9,
+   "adlar": [
+    "Eutelsat 117 West A",
+    "B"
+   ]
+  },
+  {
+   "konum": -119.0,
+   "adlar": [
+    "Anik F3",
+    "T8",
+    "EchoStar 14"
+   ]
+  },
+  {
+   "konum": -121.0,
+   "adlar": [
+    "Galaxy 31"
+   ]
+  },
+  {
+   "konum": -123.0,
+   "adlar": [
+    "Galaxy 18"
+   ]
+  },
+  {
+   "konum": -125.0,
+   "adlar": [
+    "Galaxy 30"
+   ]
+  },
+  {
+   "konum": -127.0,
+   "adlar": [
+    "Galaxy 37",
+    "Horizons 4"
+   ]
+  },
+  {
+   "konum": -131.0,
+   "adlar": [
+    "SES 21"
+   ]
+  },
+  {
+   "konum": -133.0,
+   "adlar": [
+    "Galaxy 33"
+   ]
+  },
+  {
+   "konum": -135.0,
+   "adlar": [
+    "SES 19"
+   ]
+  },
+  {
+   "konum": -139.0,
+   "adlar": [
+    "SES 22"
+   ]
+  },
+  {
+   "konum": -177.0,
+   "adlar": [
+    "NSS 9"
+   ]
+  }
+ ]
+}

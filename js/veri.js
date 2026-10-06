@@ -12,6 +12,7 @@
     'use strict';
 
     const DATA_FILE = 'uydulara_gore_kanallar.enc';
+    const GLOBAL_POSITIONS_FILE = 'uydu-konumlari.json'; // dünya genelindeki uydu konumları (frekanssız)
     const META_FILE = 'veri-surum.json';
     const ARCHIVE_GROUP = 'Pasif / Eski Yayınlar';
     // Verinin okunacağı GitHub deposu ve dalı
@@ -143,29 +144,53 @@
         [-0.8, 'Thor 5, Thor 6, Thor 7'], [-7.0, 'Nilesat 201, Nilesat 301, Eutelsat 7 West A'],
     ].map(([lon, names]) => ({ lon, names: names.split(', '), label: root.UyduHesap.formatOrbitalPosition(lon) + ' — ' + names }));
 
+    /**
+     * Uydu bulucu, AR, pusula ve haritada kullanılan konum listesi:
+     * kanal verisindeki konumlar + dünya genelindeki konum listesi (uydu-konumlari.json).
+     */
     async function loadPositions() {
-        try { return positionsFrom(await load()); } catch (e) { return FALLBACK_POSITIONS.slice(); }
+        const [raw, global] = await Promise.all([load().catch(() => null), loadJsonFile(GLOBAL_POSITIONS_FILE)]);
+        const merged = new Map((raw ? positionsFrom(raw) : FALLBACK_POSITIONS).map(p => [p.lon, { ...p, names: p.names.slice() }]));
+        for (const u of global.uydular || []) {
+            const lon = Math.round(Number(u.konum) * 10) / 10;
+            if (!Number.isFinite(lon)) continue;
+            const p = merged.get(lon) || { lon, names: [] };
+            for (const n of u.adlar || []) {
+                const key = normalize(n).replace(/[^a-z0-9]/g, '');
+                if (!p.names.some(x => normalize(x).replace(/[^a-z0-9]/g, '') === key)) p.names.push(n);
+            }
+            merged.set(lon, p);
+        }
+        return [...merged.values()]
+            .sort((a, b) => b.lon - a.lon)
+            .map(p => ({ ...p, label: root.UyduHesap.formatOrbitalPosition(p.lon) + ' — ' + p.names.join(', ') }));
     }
 
     // ---------------- Şebeke / tarama frekansları ----------------
     const NETWORK_FILE = 'sebeke-frekanslari.json';
     const POL_SHORT = { 'Horizontal (Yatay)': 'H', 'Vertical (Dikey)': 'V', 'Left (Sol)': 'L', 'Right (Sağ)': 'R' };
 
-    /** sebeke-frekanslari.json: önce GitHub, sonra cihazdaki kopya, sonra uygulama içi kopya */
-    async function loadNetworkFile() {
-        const cache = await openCache();
-        try {
-            const res = await fetchWithTimeout(GITHUB_RAW + NETWORK_FILE, 6000, { cache: 'no-store' });
-            const json = await res.json();
-            if (cache) await cache.put(NETWORK_FILE, new Response(JSON.stringify(json), { headers: { 'Content-Type': 'application/json' } }));
-            return json;
-        } catch (e) { /* çevrimdışı veya dosya henüz main'de yok */ }
-        try {
-            const cached = cache && await cache.match(NETWORK_FILE);
-            if (cached) return await cached.json();
-        } catch (e) { /* yok say */ }
-        try { return await (await fetch(NETWORK_FILE)).json(); } catch (e) { return { uydular: [] }; }
+    /** Küçük JSON dosyaları: önce GitHub, sonra cihazdaki kopya, sonra uygulama içi kopya */
+    const jsonMemo = {};
+    function loadJsonFile(file) {
+        if (jsonMemo[file]) return jsonMemo[file];
+        jsonMemo[file] = (async () => {
+            const cache = await openCache();
+            try {
+                const res = await fetchWithTimeout(GITHUB_RAW + file, 6000, { cache: 'no-store' });
+                const json = await res.json();
+                if (cache) await cache.put(file, new Response(JSON.stringify(json), { headers: { 'Content-Type': 'application/json' } }));
+                return json;
+            } catch (e) { /* çevrimdışı veya dosya henüz main'de yok */ }
+            try {
+                const cached = cache && await cache.match(file);
+                if (cached) return await cached.json();
+            } catch (e) { /* yok say */ }
+            try { return await (await fetch(file)).json(); } catch (e) { return { uydular: [] }; }
+        })();
+        return jsonMemo[file];
     }
+    const loadNetworkFile = () => loadJsonFile(NETWORK_FILE);
 
     /**
      * Yörünge konumu başına en çok aktif kanal taşıyan transponderlar.
@@ -238,6 +263,6 @@
     root.CepteVeri = {
         DATA_FILE, ARCHIVE_GROUP, GITHUB_RAW, FALLBACK_POSITIONS,
         normalize, decodeBase64Utf8, load, loadWithInfo, positionsFrom, loadPositions, registerServiceWorker,
-        loadNetworkFile, scanSuggestions, loadNetworks,
+        loadNetworkFile, loadJsonFile, scanSuggestions, loadNetworks,
     };
 })(window);
