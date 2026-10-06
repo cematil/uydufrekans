@@ -155,9 +155,11 @@
             const lon = Math.round(Number(u.konum) * 10) / 10;
             if (!Number.isFinite(lon)) continue;
             const p = merged.get(lon) || { lon, names: [] };
+            // Kanal verisinde aynı markadan uydu adı varsa (ör. "Türksat 4A" varken "Türksat 3A/4A/5B/6A") ekleme
+            const brand = n => (normalize(n).replace(/[^a-z0-9]/g, '').match(/^[a-z]+/) || [''])[0];
+            const brands = new Set(p.names.map(brand));
             for (const n of u.adlar || []) {
-                const key = normalize(n).replace(/[^a-z0-9]/g, '');
-                if (!p.names.some(x => normalize(x).replace(/[^a-z0-9]/g, '') === key)) p.names.push(n);
+                if (!brands.has(brand(n))) p.names.push(n);
             }
             merged.set(lon, p);
         }
@@ -223,17 +225,17 @@
 
     /** Tüm konumlar için şebeke (resmi) ve önerilen tarama frekansları */
     async function loadNetworks() {
-        const [raw, file] = await Promise.all([load().catch(() => ({})), loadNetworkFile()]);
-        const positions = Object.keys(raw).length ? positionsFrom(raw) : FALLBACK_POSITIONS.slice();
+        const [raw, file, allPositions] = await Promise.all([load().catch(() => ({})), loadNetworkFile(), loadPositions()]);
         const suggested = scanSuggestions(raw);
         const official = new Map((file.uydular || []).map(u => [Number(u.konum), u]));
         const near = (a, b) => a.pol === b.pol && Math.abs(Number(a.f) - Number(b.f)) <= 2;
-        return positions.map(p => {
+        // Dünya genelindeki tüm konumlar; yalnızca şebeke ya da önerilen frekansı olanlar listelenir
+        return allPositions.map(p => {
             const off = official.get(p.lon);
             const list = off ? off.frekanslar.slice() : [];
             const sug = (suggested.get(p.lon) || []).filter(s => !list.some(o => near(o, s)));
             return { lon: p.lon, label: p.label, names: p.names, title: p.names.join(', '), official: list, suggested: sug };
-        });
+        }).filter(n => n.official.length || n.suggested.length);
     }
 
     // Görünüm yardımcıları: "12380 V 27500" ve açıklama satırı

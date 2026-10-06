@@ -60,7 +60,7 @@
                         <div class="flex-1 min-w-0">
                             <div class="font-semibold truncate" x-text="n.title"></div>
                             <div class="text-xs" :class="n.official.length ? 'text-emerald-700 font-semibold' : 'text-ink-500'"
-                                 x-text="n.official.some(o => o.tur === 'sebeke') ? t('net.hasNetwork') : t('net.onlySuggested')"></div>
+                                 x-text="n.official.some(o => o.tur === 'sebeke') ? t('net.hasNetwork') : n.official.length ? t('net.hasMain') : t('net.onlySuggested')"></div>
                         </div>
                         <a :href="'hizala.html?konum=' + n.lon" class="w-10 h-10 rounded-full bg-surface hover:bg-lav-100 text-navy-800 flex items-center justify-center shrink-0" :title="t('ch.alignThis')">
                             <i class="fa-solid fa-crosshairs"></i>

@@ -1,6 +1,6 @@
 {
   "aciklama": "Uyduların şebeke arama (NIT) ve ana transponder frekansları. Uygulama bu dosyayı GitHub'daki main dalından okur; düzenleyip gönderdiğinizde kullanıcılara Play Store güncellemesi olmadan ulaşır. tur: 'sebeke' = resmi/yaygın şebeke arama frekansı, 'ana' = operatörün ana yayın transponderi. Listede olmayan uydular için uygulama, veri dosyasındaki en çok kanallı transponderları 'önerilen tarama frekansı' olarak kendisi hesaplar.",
-  "surum": "2026-10-06",
+  "surum": "2026-10-07",
   "uydular": [
     {
       "konum": 42.0,
@@ -74,6 +74,84 @@
           "tur": "sebeke",
           "not_tr": "Nilesat ana şebeke",
           "not_en": "Nilesat home network"
+        }
+      ]
+    },
+    {
+      "konum": 28.2,
+      "ad": "Astra 2E / 2F / 2G (Freesat, Birleşik Krallık)",
+      "frekanslar": [
+        {
+          "f": "11428",
+          "pol": "H",
+          "sr": "27500",
+          "fec": "2/3",
+          "tur": "sebeke",
+          "not_tr": "Freesat ev transponderi (kurulum ve EPG)",
+          "not_en": "Freesat home transponder (setup & EPG)"
+        }
+      ]
+    },
+    {
+      "konum": 13.0,
+      "ad": "Hot Bird 13F / 13G",
+      "frekanslar": [
+        {
+          "f": "10719",
+          "pol": "V",
+          "sr": "27500",
+          "fec": "5/6",
+          "tur": "ana",
+          "not_tr": "Canal+ Polska ana TP",
+          "not_en": "Canal+ Polska main TP"
+        },
+        {
+          "f": "11488",
+          "pol": "H",
+          "sr": "27500",
+          "fec": "5/6",
+          "tur": "ana",
+          "not_tr": "Polsat Box / Canal+ ana TP",
+          "not_en": "Polsat Box / Canal+ main TP"
+        }
+      ]
+    },
+    {
+      "konum": 93.5,
+      "ad": "GSAT-15 (DD Free Dish, Hindistan)",
+      "frekanslar": [
+        {
+          "f": "11090",
+          "pol": "V",
+          "sr": "29500",
+          "fec": "3/4",
+          "tur": "sebeke",
+          "not_tr": "DD Free Dish kurulum frekansı (Prasar Bharati)",
+          "not_en": "DD Free Dish setup frequency (Prasar Bharati)"
+        },
+        {
+          "f": "11630",
+          "pol": "V",
+          "sr": "30000",
+          "fec": "",
+          "tur": "ana",
+          "not_tr": "DD Free Dish MPEG-4 kanalları",
+          "not_en": "DD Free Dish MPEG-4 channels"
+        }
+      ]
+    },
+    {
+      "konum": 160.0,
+      "ad": "Optus D2 / Koreasat 6 (Freeview, Yeni Zelanda)",
+      "frekanslar": [
+        {
+          "f": "12456",
+          "pol": "H",
+          "sr": "22500",
+          "fec": "3/4",
+          "tur": "sebeke",
+          "not_tr": "Freeview NZ (NZ12L)",
+          "not_en": "Freeview NZ (NZ12L)"
         }
       ]
     }
