@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#282660">
+    <title>CepteUydu</title>
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/app.css">
+    <script src="js/dil.js"></script>
+    <script src="js/ortak.js"></script>
+    <script src="js/uydu-hesap.js"></script>
+    <script src="js/veri.js"></script>
+    <script src="js/sensor.js"></script>
+    <script defer src="vendor/alpine.min.js"></script>
+</head>
+<body x-data="compassPage()">
+    <cu-header title-key="nav.compass" back></cu-header>
+
+    <main class="page grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+        <section class="card p-5 flex flex-col items-center">
+            <div class="text-5xl font-bold text-navy-800 tabular-nums" x-text="heading === null ? '—' : fmt(trueHeading, 0) + '°'"></div>
+            <div class="text-sm text-ink-500 mb-4" x-text="heading === null ? '' : compassName(trueHeading) + ' · ' + t('compass.magnetic', { v: fmt(heading, 0) })"></div>
+
+            <div class="relative w-full max-w-[22rem] aspect-square">
+                <!-- sabit üst işaret -->
+                <div class="absolute left-1/2 -translate-x-1/2 -top-1 z-10 w-0 h-0 border-l-[10px] border-r-[10px] border-t-[16px] border-l-transparent border-r-transparent border-t-rose-500"></div>
+                <svg viewBox="-110 -110 220 220" class="w-full h-full">
+                    <circle r="106" fill="#1f1d4d"/>
+                    <circle r="98" fill="#282660"/>
+                    <g :style="'transform: rotate(' + (-(trueHeading || 0)) + 'deg); transition: transform .15s linear'" x-html="dial()"></g>
+                    <circle r="5" fill="#f4b740"/>
+                </svg>
+            </div>
+            <p class="text-xs text-ink-400 mt-4 text-center" x-text="t('compass.holdFlat')"></p>
+            <p x-show="message" class="text-sm text-rose-600 mt-2 text-center" x-text="message"></p>
+            <button type="button" x-show="needsStart" @click="start()" class="btn-primary mt-3"><i class="fa-solid fa-play"></i><span x-text="t('compass.start')"></span></button>
+        </section>
+
+        <section class="card p-5 space-y-3" x-show="target">
+            <h2 class="section-title" x-text="t('compass.targetTitle')"></h2>
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-lav-100 text-navy-800 flex items-center justify-center text-xl">🛰️</div>
+                <div>
+                    <div class="font-semibold" x-text="UyduHesap.formatOrbitalPosition(satLon)"></div>
+                    <div class="text-xs text-ink-500" x-text="t('common.az') + ' ' + fmt(target?.azimuth) + '° · ' + t('common.el') + ' ' + fmt(target?.elevation) + '°'"></div>
+                </div>
+            </div>
+            <div class="rounded-xl p-4 text-center font-bold text-lg" :class="Math.abs(turn) < 3 ? 'bg-emerald-50 text-emerald-700' : 'bg-lav-50 text-navy-800'" x-show="heading !== null"
+                 x-text="Math.abs(turn) < 3 ? t('compass.onTarget') : t(turn > 0 ? 'ar.right' : 'ar.left', { n: Math.round(Math.abs(turn)) })"></div>
+            <p class="text-xs text-ink-400" x-text="t('compass.declNote', { v: fmtSigned(declination) })"></p>
+        </section>
+        <section class="card p-5 text-center text-ink-500" x-show="!target">
+            <p x-text="t('find.needLocation')"></p>
+            <a href="konum.html" class="btn-soft mt-3"><i class="fa-solid fa-location-dot"></i><span x-text="t('nav.location')"></span></a>
+        </section>
+    </main>
+
+    <script>
+        CepteVeri.registerServiceWorker();
+
+        function compassPage() {
+            const s = CepteDurum.get();
+            let stop = null;
+            return {
+                heading: null,
+                message: '',
+                needsStart: typeof (window.DeviceOrientationEvent || {}).requestPermission === 'function',
+                satLon: s.satLon,
+                declination: s.declination ?? 0,
+
+                init() {
+                    if (!this.needsStart) this.start();
+                    window.addEventListener('pagehide', () => stop && stop());
+                },
+
+                async start() {
+                    if (!(await CepteSensor.requestPermission())) { this.message = t('ar.noPermission'); return; }
+                    this.needsStart = false;
+                    stop = CepteSensor.start(d => {
+                        this.heading = d.heading;
+                        this.message = d.absolute ? '' : t('ar.noAbs');
+                    });
+                    setTimeout(() => { if (this.heading === null) this.message = t('ar.noSensor'); }, 2500);
+                },
+
+                get trueHeading() { return this.heading === null ? null : (this.heading + this.declination + 360) % 360; },
+
+                get target() {
+                    if (!CepteDurum.hasLocation()) return null;
+                    const st = CepteDurum.get();
+                    return UyduHesap.lookAngles(st.lat, st.lon, this.satLon);
+                },
+
+                // pozitif: sağa dön
+                get turn() { return this.target && this.heading !== null ? UyduHesap.angleDiff(this.trueHeading, this.target.azimuth) : 0; },
+
+                // Kadran: 5°'de bir çizgi, 30°'de bir sayı, ana yönlerde harf, uydu yönünde işaret
+                dial() {
+                    const names = { 0: t('dir.N'), 90: t('dir.E'), 180: t('dir.S'), 270: t('dir.W') };
+                    let out = '';
+                    for (let a = 0; a < 360; a += 5) {
+                        const major = a % 30 === 0;
+                        out += `<line x1="0" y1="-96" x2="0" y2="${major ? -84 : -90}" stroke="${major ? '#fff' : '#8d8ca6'}" stroke-width="${major ? 2 : 1}" transform="rotate(${a})"/>`;
+                        if (names[a] !== undefined) {
+                            out += `<text x="0" y="-66" transform="rotate(${a})" text-anchor="middle" font-size="16" font-weight="700" fill="${a === 0 ? '#e94b4b' : '#fff'}">${names[a]}</text>`;
+                        } else if (major) {
+                            out += `<text x="0" y="-70" transform="rotate(${a})" text-anchor="middle" font-size="9" fill="#a99ff5">${a}</text>`;
+                        }
+                    }
+                    if (this.target && this.target.visible) {
+                        out += `<g transform="rotate(${this.target.azimuth})"><line x1="0" y1="-10" x2="0" y2="-52" stroke="#f4b740" stroke-width="3" stroke-linecap="round"/><text x="0" y="-38" text-anchor="middle" font-size="14" transform="rotate(${-this.target.azimuth} 0 -44)">🛰️</text></g>`;
+                    }
+                    return out;
+                },
+            };
+        }
+    </script>
+</body>
+</html>

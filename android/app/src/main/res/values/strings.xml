@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CepteUydu</string>
+    <string name="title_activity_main">CepteUydu</string>
+    <string name="package_name">com.cematil.cepteuydu</string>
+    <string name="custom_url_scheme">com.cematil.cepteuydu</string>
+</resources>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#282660">
+    <title>CepteUydu</title>
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+    <link rel="stylesheet" href="css/app.css">
+    <script src="js/dil.js"></script>
+    <script src="js/ortak.js"></script>
+    <script src="js/uydu-hesap.js"></script>
+    <script src="js/veri.js"></script>
+    <script src="js/harita-ortak.js"></script>
+    <script src="vendor/leaflet/leaflet.js"></script>
+    <script defer src="vendor/alpine.min.js"></script>
+</head>
+<body x-data="mapPage()">
+    <cu-header title-key="nav.map" back></cu-header>
+
+    <div class="map-page relative">
+        <div x-ref="map" class="absolute inset-0 z-0 bg-slate-200"></div>
+
+        <div class="absolute top-3 left-3 right-16 z-[500] flex pointer-events-none">
+            <div class="pointer-events-auto bg-white/95 rounded-full shadow-card px-4 py-2 text-xs text-ink-700" x-text="t('map.tapHint')"></div>
+        </div>
+
+        <button type="button" @click="locate()" :aria-label="t('loc.useGps')" class="absolute right-3 z-[500] w-12 h-12 rounded-full bg-white shadow-card text-navy-800 text-lg flex items-center justify-center" style="bottom: calc(var(--sheet-h, 11rem) + 0.75rem)">
+            <i class="fa-solid" :class="gpsBusy ? 'fa-spinner fa-spin' : 'fa-location-crosshairs'"></i>
+        </button>
+
+        <!-- Alt bilgi kartı -->
+        <div x-ref="sheet" class="absolute left-0 right-0 bottom-0 z-[500] p-3 sm:p-4" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom))">
+            <div class="card p-4 max-w-xl mx-auto">
+                <select x-model.number="satLon" class="field mb-3" :aria-label="t('find.satellite')">
+                    <template x-for="p in positions" :key="p.lon">
+                        <option :value="p.lon" :selected="p.lon === satLon" x-text="p.label"></option>
+                    </template>
+                </select>
+                <p x-show="gpsError" class="text-xs text-rose-600 mb-2" x-text="gpsError"></p>
+                <template x-if="result">
+                    <div class="flex items-center gap-3">
+                        <div class="grid grid-cols-3 gap-2 flex-1 text-center">
+                            <div class="stat !p-2"><div class="stat-label" x-text="t('common.az')"></div><div class="font-bold text-navy-800" x-text="fmt(result.azimuth) + '°'"></div></div>
+                            <div class="stat !p-2"><div class="stat-label" x-text="t('common.el')"></div><div class="font-bold text-navy-800" x-text="fmt(result.elevation) + '°'"></div></div>
+                            <div class="stat !p-2"><div class="stat-label" x-text="t('common.skew')"></div><div class="font-bold text-navy-800" x-text="fmtSigned(result.skew) + '°'"></div></div>
+                        </div>
+                        <a href="hizala.html#ar" class="btn-accent !px-3 shrink-0" :title="t('nav.ar')"><i class="fa-solid fa-camera"></i></a>
+                    </div>
+                </template>
+                <p x-show="!result" class="text-sm text-ink-500" x-text="t('map.noLocation')"></p>
+                <p x-show="result && !result.visible" class="text-xs text-rose-600 mt-2" x-text="t('find.notVisible')"></p>
+                <p class="text-[11px] text-ink-400 mt-2" x-text="t('map.trueNorthNote')"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        CepteVeri.registerServiceWorker();
+
+        function mapPage() {
+            const s = CepteDurum.get();
+            // Leaflet nesneleri Alpine'in reaktif verisine konmaz (proxy Leaflet'i bozar)
+            let map = null, layers = null;
+            return {
+                positions: CepteVeri.FALLBACK_POSITIONS.slice(),
+                satLon: s.satLon,
+                lat: s.lat,
+                lon: s.lon,
+                gpsBusy: false,
+                gpsError: '',
+
+                async init() {
+                    const hasLoc = CepteDurum.hasLocation();
+                    map = CepteHarita.createMap(this.$refs.map, hasLoc ? [this.lat, this.lon] : [39.0, 35.0], hasLoc ? 16 : 6);
+                    layers = L.layerGroup().addTo(map);
+                    map.on('click', e => this.setLocation(e.latlng.lat, e.latlng.lng, { type: 'map' }));
+                    map.on('zoomend moveend', () => this.draw());
+                    new ResizeObserver(() => {
+                        this.$el.style.setProperty('--sheet-h', this.$refs.sheet.offsetHeight + 'px');
+                        map.invalidateSize();
+                    }).observe(this.$refs.sheet);
+                    this.$watch('satLon', () => { CepteDurum.set({ satLon: this.satLon }); this.draw(); });
+                    this.draw();
+
+                    this.positions = await CepteVeri.loadPositions();
+                    if (!this.positions.some(p => p.lon === this.satLon)) this.satLon = 42.0;
+                },
+
+                get result() {
+                    if (!Number.isFinite(this.lat) || !Number.isFinite(this.lon)) return null;
+                    return UyduHesap.lookAngles(this.lat, this.lon, this.satLon);
+                },
+
+                setLocation(lat, lon, loc) {
+                    this.lat = Math.round(lat * 1e5) / 1e5;
+                    this.lon = Math.round(lon * 1e5) / 1e5;
+                    CepteKonum.saveLocation(this.lat, this.lon, loc);
+                    this.draw();
+                },
+
+                async locate() {
+                    this.gpsBusy = true;
+                    this.gpsError = '';
+                    try {
+                        const p = await CepteKonum.locate();
+                        this.setLocation(p.lat, p.lon, { type: 'gps', acc: p.accuracy });
+                        map.setView([p.lat, p.lon], Math.max(map.getZoom(), 17));
+                    } catch (e) {
+                        this.gpsError = CepteKonum.locateErrorText(e);
+                    } finally {
+                        this.gpsBusy = false;
+                    }
+                },
+
+                // Konumdan uydu yönüne (gerçek kuzeye göre azimut) çizgi çizer
+                draw() {
+                    layers.clearLayers();
+                    const r = this.result;
+                    if (!r) return;
+                    const from = [this.lat, this.lon];
+                    L.marker(from, { icon: CepteHarita.dotIcon('#282660') }).addTo(layers);
+                    if (!r.visible) return;
+                    // Çizgi uzunluğu: ekranın yarı köşegeni kadar (her yakınlaşmada okunaklı kalsın)
+                    const b = map.getBounds();
+                    const len = Math.max(50, map.distance(b.getSouthWest(), b.getNorthEast()) / 2);
+                    const to = CepteHarita.destination(this.lat, this.lon, r.azimuth, len);
+                    L.polyline([from, to], { color: '#7c6cf2', weight: 5, opacity: 0.9 }).addTo(layers);
+                    L.marker(to, { icon: CepteHarita.labelIcon(UyduHesap.formatOrbitalPosition(this.satLon) + ' · ' + fmt(r.azimuth) + '°') }).addTo(layers);
+                },
+            };
+        }
+    </script>
+</body>
+</html>

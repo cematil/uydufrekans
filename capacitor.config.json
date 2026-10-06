@@ -1,0 +1,15 @@
+{
+  "appId": "com.cematil.cepteuydu",
+  "appName": "CepteUydu",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#1f1d4d"
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "native",
+      "initialViewportFitValueHint": "cover",
+      "style": "DARK"
+    }
+  }
+}

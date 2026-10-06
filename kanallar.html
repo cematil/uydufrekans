@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Uydulara göre frekans ve kanal rehberi: frekans, polarizasyon, sembol oranı, FEC, şifreleme. Satellite channel and frequency guide.">
+    <meta name="theme-color" content="#282660">
+    <title>CepteUydu</title>
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/app.css">
+    <script src="js/dil.js"></script>
+    <script src="js/ortak.js"></script>
+    <script src="js/uydu-hesap.js"></script>
+    <script src="js/veri.js"></script>
+    <script src="js/kategoriler.js"></script>
+    <script defer src="vendor/alpine.min.js"></script>
+</head>
+<body x-data="channelsPage()" @keydown.escape.window="closeModal()">
+    <cu-header title-key="nav.channels" back></cu-header>
+
+    <main class="page space-y-4">
+        <label class="relative block">
+            <span class="sr-only" x-text="t('ch.searchAll')"></span>
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400"></i>
+            <input type="search" x-model.debounce.250ms="searchQuery" :placeholder="t('ch.searchAll')" class="field !bg-white shadow-card pl-10 py-3">
+        </label>
+
+        <!-- TKGS -->
+        <div class="card p-4 border border-amber-200">
+            <div class="flex items-start gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-thumbtack"></i></div>
+                <div class="flex-1 min-w-0">
+                    <div class="font-semibold" x-text="t('tkgs.title')"></div>
+                    <p class="text-xs text-ink-500 mt-0.5" x-text="t('tkgs.long')"></p>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-3">
+                <template x-for="tp in tkgs" :key="tp.text">
+                    <button type="button" @click="copyText(tp.text, tp.text)" class="font-mono text-sm px-3 py-2 rounded-xl bg-lav-50 border border-lav-200 hover:border-lav-500 transition-colors">
+                        <span class="font-bold text-navy-800" x-text="tp.text"></span>
+                        <span class="text-[10px] text-ink-500 ml-1" x-text="t(tp.note)"></span>
+                        <i class="ml-1 text-[11px]" :class="copiedId === tp.text ? 'fa-solid fa-check text-emerald-600' : 'fa-regular fa-copy text-ink-400'"></i>
+                    </button>
+                </template>
+            </div>
+        </div>
+
+        <div x-show="loading" class="text-center py-16 text-ink-500">
+            <i class="fa-solid fa-satellite-dish fa-bounce text-3xl text-lav-500 mb-3"></i>
+            <p x-text="t(statusKey)"></p>
+        </div>
+
+        <div x-show="!loading && error" x-cloak class="card text-center py-12 px-4">
+            <i class="fa-solid fa-triangle-exclamation text-3xl text-rose-500 mb-3"></i>
+            <p class="font-semibold" x-text="t('data.error')"></p>
+            <p class="text-ink-500 text-sm mb-5" x-text="error"></p>
+            <button type="button" @click="load()" class="btn-primary"><i class="fa-solid fa-rotate-right"></i><span x-text="t('common.retry')"></span></button>
+        </div>
+
+        <div x-show="!loading && !error" x-cloak class="space-y-4">
+            <div class="grid grid-cols-3 gap-3">
+                <div class="card p-3 text-center">
+                    <div class="text-xl sm:text-2xl font-bold text-navy-800" x-text="fmtInt(filteredSatellites.length)"></div>
+                    <div class="text-[11px] text-ink-500" x-text="t('ch.statSats')"></div>
+                </div>
+                <div class="card p-3 text-center">
+                    <div class="text-xl sm:text-2xl font-bold text-emerald-600" x-text="fmtInt(stats.active)"></div>
+                    <div class="text-[11px] text-ink-500" x-text="t('ch.statActive')"></div>
+                </div>
+                <div class="card p-3 text-center">
+                    <div class="text-xl sm:text-2xl font-bold text-ink-700" x-text="fmtInt(stats.total)"></div>
+                    <div class="text-[11px] text-ink-500" x-text="t('ch.statTotal')"></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <template x-for="sat in filteredSatellites" :key="sat.name">
+                    <div class="card p-4 flex items-center gap-3">
+                        <button type="button" @click="openModal(sat)" class="flex-1 min-w-0 text-left flex items-center gap-3">
+                            <div class="w-14 h-14 rounded-xl bg-lav-100 text-navy-800 flex flex-col items-center justify-center shrink-0">
+                                <i class="fa-solid fa-satellite text-sm" x-show="sat.position"></i>
+                                <i class="fa-solid fa-box-archive text-sm" x-show="!sat.position"></i>
+                                <span class="text-[10px] font-bold mt-0.5" x-text="sat.position || t('ch.archive')"></span>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="font-semibold truncate" x-text="sat.position ? sat.title : t('ch.archiveTitle')"></div>
+                                <div class="text-xs text-ink-500">
+                                    <span x-text="t('ch.records', { n: fmtInt(sat.channels.length) })"></span>
+                                    <span x-show="sat.activeCount > 0" class="text-emerald-600" x-text="' · ' + t('ch.activeN', { n: fmtInt(sat.activeCount) })"></span>
+                                </div>
+                                <div x-show="searchQuery && sat.matchCount" class="text-xs text-lav-600 font-semibold" x-text="t('ch.matches', { n: fmtInt(sat.matchCount) })"></div>
+                            </div>
+                        </button>
+                        <a x-show="sat.orbit !== null" :href="'hizala.html?konum=' + sat.orbit" :title="t('ch.alignThis')" class="w-10 h-10 rounded-full bg-surface hover:bg-lav-100 text-navy-800 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-crosshairs"></i><span class="sr-only" x-text="t('ch.alignThis')"></span>
+                        </a>
+                    </div>
+                </template>
+            </div>
+
+            <div x-show="filteredSatellites.length === 0" class="text-center py-12 text-ink-500">
+                <i class="fa-solid fa-satellite-dish text-3xl mb-3 text-ink-400"></i>
+                <p x-text="t('ch.noSat')"></p>
+            </div>
+        </div>
+    </main>
+
+    <!-- KANAL LİSTESİ: telefonda tam ekran, tablette ortada pencere -->
+    <div x-show="selectedSat" x-cloak x-transition.opacity class="fixed inset-0 z-50 bg-black/50 sm:p-6 flex sm:items-center justify-center" role="dialog" aria-modal="true">
+        <div @click.outside="closeModal()" class="bg-surface w-full sm:max-w-5xl h-full sm:h-auto sm:max-h-[90vh] sm:rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+            <div class="bg-navy-800 text-white" style="padding-top: env(safe-area-inset-top)">
+                <div class="flex items-center gap-2 px-2 h-14">
+                    <button type="button" @click="closeModal()" class="hdr-btn" :aria-label="t('common.close')"><i class="fa-solid fa-arrow-left sm:hidden"></i><i class="fa-solid fa-xmark hidden sm:block"></i></button>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-semibold truncate" x-text="selectedSat?.position ? selectedSat?.name : t('ch.archiveTitle')"></div>
+                        <div class="text-[11px] text-white/70" x-text="t('ch.listing', { n: fmtInt(modalFilteredChannels.length) })"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-3 sm:p-4 space-y-3 bg-white border-b border-slate-100">
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <div class="flex bg-surface p-1 rounded-xl text-xs w-full sm:w-auto">
+                        <button type="button" @click="setStatus('all')" :class="statusFilter === 'all' ? 'bg-white shadow text-navy-800 font-bold' : 'text-ink-500'" class="px-3 py-1.5 rounded-lg flex-1 sm:flex-none" x-text="t('ch.all')"></button>
+                        <button type="button" @click="setStatus('active')" :class="statusFilter === 'active' ? 'bg-white shadow text-emerald-700 font-bold' : 'text-ink-500'" class="px-3 py-1.5 rounded-lg flex-1 sm:flex-none" x-text="t('ch.active') + ' (' + fmtInt(selectedSat?.activeCount || 0) + ')'"></button>
+                        <button type="button" @click="setStatus('passive')" :class="statusFilter === 'passive' ? 'bg-white shadow text-rose-700 font-bold' : 'text-ink-500'" class="px-3 py-1.5 rounded-lg flex-1 sm:flex-none" x-text="t('ch.passive') + ' (' + fmtInt((selectedSat?.channels.length || 0) - (selectedSat?.activeCount || 0)) + ')'"></button>
+                    </div>
+                    <label class="relative block flex-1">
+                        <span class="sr-only" x-text="t('ch.searchIn')"></span>
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-ink-400 text-xs"></i>
+                        <input type="search" x-ref="modalSearch" x-model.debounce.200ms="modalSearchQuery" @input="visibleCount = PAGE_SIZE" :placeholder="t('ch.searchIn')" class="field pl-8 py-2">
+                    </label>
+                </div>
+                <div class="flex gap-2 overflow-x-auto pb-1 -mb-1" :title="t('ch.catHint')">
+                    <button type="button" @click="setCategory('')" class="chip" :class="categoryFilter === '' ? 'chip-on' : 'chip-off'" x-text="t('ch.allCats')"></button>
+                    <template x-for="cat in categories" :key="cat.key">
+                        <button type="button" x-show="categoryCounts[cat.key]" @click="setCategory(cat.key)" class="chip" :class="categoryFilter === cat.key ? 'chip-on' : 'chip-off'">
+                            <i class="fa-solid mr-1" :class="cat.icon"></i><span x-text="t('cat.' + cat.key)"></span>
+                            <span class="opacity-60" x-text="fmtInt(categoryCounts[cat.key])"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <div class="p-3 sm:p-4 overflow-y-auto flex-1" x-ref="modalBody" style="padding-bottom: max(1rem, env(safe-area-inset-bottom))">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" x-show="modalFilteredChannels.length > 0">
+                    <template x-for="ch in visibleChannels" :key="ch._id">
+                        <div class="card p-3.5 flex flex-col justify-between">
+                            <div>
+                                <div class="flex justify-between items-start gap-2 mb-1.5">
+                                    <h4 class="font-semibold truncate" :title="ch.name" x-text="ch.name"></h4>
+                                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-surface text-ink-700 shrink-0" x-text="dataText(ch.country)"></span>
+                                </div>
+                                <div class="mb-2 flex flex-wrap items-center gap-1">
+                                    <span x-show="ch.is_active" class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700"><i class="fa-solid fa-circle-check mr-1"></i><span x-text="t('ch.activeBadge')"></span></span>
+                                    <span x-show="!ch.is_active" class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700"><i class="fa-solid fa-circle-xmark mr-1"></i><span x-text="t('ch.passiveBadge')"></span></span>
+                                </div>
+                                <button type="button" x-show="ch.frequency" @click="copyTuning(ch)" :title="t('ch.copyTuning')" class="w-full text-left text-sm text-navy-800 font-mono font-semibold mb-2 flex items-center gap-2 bg-lav-50 rounded-lg px-2.5 py-1.5 hover:bg-lav-100">
+                                    <i class="fa-solid fa-signal text-[10px] text-lav-500"></i>
+                                    <span class="flex-1" x-text="tuningText(ch)"></span>
+                                    <i class="text-[11px]" :class="copiedId === ch._id ? 'fa-solid fa-check text-emerald-600' : 'fa-regular fa-copy text-ink-400'"></i>
+                                </button>
+                            </div>
+                            <div class="flex justify-between items-center gap-2 border-t border-slate-100 pt-2 text-[11px] text-ink-500">
+                                <span class="truncate" :title="dataText(ch.encryption)" x-text="t('ch.enc') + ': ' + dataText(ch.encryption)"></span>
+                                <span class="font-mono shrink-0" x-text="ch.sid ? 'SID ' + ch.sid : ''"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <div x-show="visibleCount < modalFilteredChannels.length" class="text-center mt-5">
+                    <button type="button" @click="visibleCount += PAGE_SIZE" class="btn-soft" x-text="t('ch.more', { n: fmtInt(modalFilteredChannels.length - visibleCount) })"></button>
+                </div>
+
+                <div x-show="modalFilteredChannels.length === 0" class="text-center py-12 text-ink-500">
+                    <i class="fa-solid fa-satellite-dish text-3xl mb-3 text-ink-400"></i>
+                    <p x-text="t('ch.noChannel')"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        CepteVeri.registerServiceWorker();
+        const { ARCHIVE_GROUP, normalize } = CepteVeri;
+        const POL_SHORT = { 'Horizontal (Yatay)': 'H', 'Vertical (Dikey)': 'V', 'Left (Sol)': 'L', 'Right (Sağ)': 'R' };
+
+        // "Türksat 4A (42.0°E)" -> { title: "Türksat 4A", position: "42.0°E" }
+        function splitSatelliteName(name) {
+            const m = name.match(/^(.*)\s+\(([\d.,]+\s*°\s*[EWDB])\)$/);
+            return m ? { title: m[1], position: m[2] } : { title: name, position: '' };
+        }
+
+        function channelsPage() {
+            return {
+                PAGE_SIZE: 60,
+                loading: true,
+                statusKey: 'data.loading',
+                error: '',
+                searchQuery: '',
+                modalSearchQuery: '',
+                statusFilter: 'all',
+                categoryFilter: '',
+                categories: CepteKategori.CATEGORIES,
+                tkgs: [
+                    { text: '12380 V 27500', note: 'tkgs.network' },
+                    { text: '12423 H 30000', note: 'tkgs.alt' },
+                ],
+                selectedSat: null,
+                visibleCount: 60,
+                copiedId: null,
+                satellites: [],
+                stats: { total: 0, active: 0 },
+
+                init() {
+                    this.load();
+                    this.$watch('selectedSat', sat => { document.body.style.overflow = sat ? 'hidden' : ''; });
+                },
+
+                async load() {
+                    this.loading = true;
+                    this.error = '';
+                    try {
+                        const raw = await CepteVeri.load({ onStatus: k => { this.statusKey = k; } });
+                        this.satellites = this.prepare(raw);
+                    } catch (e) {
+                        console.error('Veri yüklenemedi:', e);
+                        this.error = e.message || String(e);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                // Veriyi bir kez işleyip arama anahtarlarını önceden hazırlar.
+                prepare(raw) {
+                    let id = 0, total = 0, active = 0;
+                    const list = Object.entries(raw).map(([name, channels]) => {
+                        const prepared = (Array.isArray(channels) ? channels : []).map(c => {
+                            const ch = {
+                                satellite: c.satellite || name,
+                                name: c.name || '—',
+                                country: c.country || 'Bilinmiyor',
+                                frequency: c.frequency || '',
+                                pol: POL_SHORT[c.polarization] || c.polarization || '',
+                                symbol_rate: c.symbol_rate || '',
+                                fec: c.fec || '',
+                                encryption: c.encryption || 'Bilinmiyor',
+                                sid: c.sid || '',
+                                is_active: !!c.is_active,
+                                _id: id++,
+                            };
+                            ch._search = normalize([ch.name, ch.frequency, ch.country, ch.encryption, ch.sid].join(' '));
+                            ch._cats = CepteKategori.detect(normalize(ch.name));
+                            return ch;
+                        });
+                        const activeCount = prepared.filter(c => c.is_active).length;
+                        total += prepared.length;
+                        active += activeCount;
+                        return { name, ...splitSatelliteName(name), orbit: UyduHesap.parseOrbitalPosition(name), channels: prepared, activeCount, _search: normalize(name) };
+                    });
+                    this.stats = { total, active };
+                    // Arşiv grubu en sona, diğerleri doğudan batıya
+                    return list.sort((a, b) =>
+                        (a.name === ARCHIVE_GROUP) - (b.name === ARCHIVE_GROUP) ||
+                        (b.orbit ?? 0) - (a.orbit ?? 0) ||
+                        a.name.localeCompare(b.name, 'tr', { numeric: true }));
+                },
+
+                get filteredSatellites() {
+                    const q = normalize(this.searchQuery.trim());
+                    if (!q) return this.satellites;
+                    const result = [];
+                    for (const sat of this.satellites) {
+                        const satMatch = sat._search.includes(q);
+                        const matchCount = sat.channels.reduce((n, c) => n + (c._search.includes(q) ? 1 : 0), 0);
+                        if (satMatch || matchCount > 0) result.push({ ...sat, matchCount });
+                    }
+                    return result;
+                },
+
+                get modalFilteredChannels() {
+                    if (!this.selectedSat) return [];
+                    let channels = this.selectedSat.channels;
+                    if (this.statusFilter === 'active') channels = channels.filter(c => c.is_active);
+                    else if (this.statusFilter === 'passive') channels = channels.filter(c => !c.is_active);
+                    if (this.categoryFilter) channels = channels.filter(c => c._cats.includes(this.categoryFilter));
+                    const q = normalize(this.modalSearchQuery.trim());
+                    return q ? channels.filter(c => c._search.includes(q)) : channels;
+                },
+
+                // Seçili uydu + durum filtresine göre kategori başına kanal sayısı
+                get categoryCounts() {
+                    const counts = {};
+                    if (!this.selectedSat) return counts;
+                    for (const c of this.selectedSat.channels) {
+                        if (this.statusFilter === 'active' && !c.is_active) continue;
+                        if (this.statusFilter === 'passive' && c.is_active) continue;
+                        for (const k of c._cats) counts[k] = (counts[k] || 0) + 1;
+                    }
+                    return counts;
+                },
+
+                // Çok kanallı uydularda cihazı yormamak için sayfalı gösterim
+                get visibleChannels() {
+                    return this.modalFilteredChannels.slice(0, this.visibleCount);
+                },
+
+                openModal(sat) {
+                    const q = this.searchQuery.trim();
+                    this.modalSearchQuery = q && !sat._search.includes(normalize(q)) ? q : '';
+                    this.statusFilter = 'all';
+                    this.categoryFilter = '';
+                    this.visibleCount = this.PAGE_SIZE;
+                    this.selectedSat = sat;
+                    this.$nextTick(() => {
+                        this.$refs.modalBody.scrollTop = 0;
+                        if (window.matchMedia('(min-width: 768px)').matches) this.$refs.modalSearch.focus();
+                    });
+                },
+
+                closeModal() { this.selectedSat = null; },
+
+                setCategory(key) {
+                    this.categoryFilter = key;
+                    this.visibleCount = this.PAGE_SIZE;
+                    this.$refs.modalBody.scrollTop = 0;
+                },
+
+                setStatus(status) {
+                    this.statusFilter = status;
+                    this.visibleCount = this.PAGE_SIZE;
+                    this.$refs.modalBody.scrollTop = 0;
+                },
+
+                // Veri Türkçe tutulur; İngilizce arayüzde ortak değerleri çevir
+                dataText(v) {
+                    return String(v).replace(/Bilinmiyor/g, t('common.unknown')).replace(/Şifresiz/g, t('ch.fta'));
+                },
+
+                tuningText(ch) {
+                    return [ch.frequency, ch.pol, ch.symbol_rate, ch.fec].filter(Boolean).join(' ');
+                },
+
+                copyTuning(ch) {
+                    return this.copyText(ch.name + ' — ' + ch.satellite + ' — ' + this.tuningText(ch), ch._id);
+                },
+
+                async copyText(text, id) {
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        this.copiedId = id;
+                        setTimeout(() => { if (this.copiedId === id) this.copiedId = null; }, 1500);
+                    } catch (e) {
+                        console.warn('Panoya kopyalanamadı:', e);
+                    }
+                },
+            };
+        }
+    </script>
+</body>
+</html>

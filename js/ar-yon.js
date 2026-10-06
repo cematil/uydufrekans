@@ -1,5 +1,5 @@
 /*
- * CepteUydu - AR uydu bulucu motoru
+ * CepteUydu - AR uydu bulucu motoru (metinler js/dil.js'teki 'ar.*' anahtarlarından)
  *
  * Kamera görüntüsünün üzerine, telefonun yön sensörleri (pusula + ivmeölçer + jiroskop)
  * ile hedef uydunun gökyüzündeki konumunu çizer ve hizalamaya göre bip sesi verir.
@@ -127,7 +127,7 @@
         listenerType = ('ondeviceorientationabsolute' in root) ? 'deviceorientationabsolute' : 'deviceorientation';
         root.addEventListener(listenerType, onOrientation);
         sensorTimer = setTimeout(() => {
-            if (!R) opts && opts.onHud({ message: 'Yön sensörü verisi alınamadı. Bu özellik pusulası olan bir telefonda çalışır.' });
+            if (!R) opts && opts.onHud({ message: t('ar.noSensor') });
         }, 2500);
     }
 
@@ -135,7 +135,7 @@
 
     async function startCamera(video) {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            return 'Bu tarayıcı kamerayı desteklemiyor (HTTPS gerekir).';
+            return t('ar.camUnsupported');
         }
         try {
             stream = await navigator.mediaDevices.getUserMedia({
@@ -147,8 +147,8 @@
             return '';
         } catch (e) {
             return e && e.name === 'NotAllowedError'
-                ? 'Kamera izni verilmedi; yönlendirme kamerasız devam ediyor.'
-                : 'Kamera açılamadı; yönlendirme kamerasız devam ediyor.';
+                ? t('ar.camDenied')
+                : t('ar.camFailed');
         }
     }
 
@@ -338,22 +338,22 @@
     function pushHud() {
         if (!opts) return;
         if (!R || !scene || state.error === null) {
-            opts.onHud({ heading: null, pitch: null, error: null, locked: false, guidance: 'Sensörler bekleniyor...' });
+            opts.onHud({ heading: null, pitch: null, error: null, locked: false, guidance: t('ar.waiting') });
             return;
         }
         const dAz = ((scene.target.az - state.heading + 540) % 360) - 180;
         const dEl = scene.target.el - state.pitch;
         const locked = state.error <= LOCK_DEG;
         const parts = [];
-        if (Math.abs(dAz) >= 1) parts.push((dAz > 0 ? 'Sağa ' : 'Sola ') + Math.round(Math.abs(dAz)) + '°');
-        if (Math.abs(dEl) >= 1) parts.push((dEl > 0 ? 'Yukarı ' : 'Aşağı ') + Math.round(Math.abs(dEl)) + '°');
+        if (Math.abs(dAz) >= 1) parts.push(t(dAz > 0 ? 'ar.right' : 'ar.left', { n: Math.round(Math.abs(dAz)) }));
+        if (Math.abs(dEl) >= 1) parts.push(t(dEl > 0 ? 'ar.up' : 'ar.down', { n: Math.round(Math.abs(dEl)) }));
         opts.onHud({
             heading: state.heading,
             pitch: state.pitch,
             error: state.error,
             locked,
-            guidance: locked ? 'Uydu yönündesiniz — engel var mı kontrol edin' : (parts.join(' · ') || 'Neredeyse...'),
-            message: relativeOnly ? 'Bu cihaz mutlak pusula verisi sağlamıyor; yön tahmini hatalı olabilir.' : '',
+            guidance: locked ? t('ar.locked') : (parts.join(' · ') || t('ar.almost')),
+            message: relativeOnly ? t('ar.noAbs') : '',
         });
     }
 
@@ -372,7 +372,7 @@
         ensureAudio(); // kullanıcı tıklaması içinde başlatılmalı
         const sensorOk = await requestSensorPermission();
         if (!sensorOk) {
-            o.onHud({ message: 'Hareket ve yön sensörü izni verilmedi. Ayarlardan izin verip tekrar deneyin.' });
+            o.onHud({ message: t('ar.noPermission') });
         } else {
             listenSensors();
         }

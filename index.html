@@ -1,441 +1,182 @@
 <!DOCTYPE html>
-<html lang="tr" class="dark">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="CepteUydu: uydulara göre ayrıştırılmış frekans ve kanal rehberi. Kanal adı, frekans, ülke ve şifreleme sistemine göre arama yapın.">
-    <meta name="theme-color" content="#0b0f19">
-    <title>CepteUydu - Modern Uydu ve Kanal Kataloğu</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="CepteUydu: uydu bulucu, çanak anten hizalama, AR kamera, pusula, su terazisi ve uydu frekans rehberi. Satellite finder, dish alignment and frequency guide.">
+    <meta name="theme-color" content="#282660">
+    <title>CepteUydu</title>
     <link rel="icon" href="icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="manifest" href="manifest.webmanifest">
-
-    <!-- Alpine yüklenmeden önce x-cloak öğelerini gizle -->
-    <style>[x-cloak] { display: none !important; }</style>
-
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        if (window.tailwind) tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        space: { 900: '#0b0f19', 800: '#111827', 700: '#1f2937', 600: '#374151' },
-                        neon: { cyan: '#06b6d4', blue: '#3b82f6' }
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Alpine.js -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/app.css">
+    <script src="js/dil.js"></script>
+    <script src="js/ortak.js"></script>
+    <script src="js/uydu-hesap.js"></script>
+    <script src="js/veri.js"></script>
+    <script src="js/ikonlar.js"></script>
+    <script defer src="vendor/alpine.min.js"></script>
 </head>
-<body class="bg-space-900 text-slate-100 font-sans min-h-screen" x-data="satelliteApp()" @keydown.escape.window="closeModal()">
+<body x-data="homePage()">
 
-    <noscript>
-        <p class="p-6 text-center text-rose-400">Bu sayfanın çalışması için JavaScript'in etkin olması gerekir.</p>
-    </noscript>
-
-    <!-- Üst Menü (Navbar) -->
-    <header class="sticky top-0 z-40 backdrop-blur-md bg-space-900/80 border-b border-space-700">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 md:h-16 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <a href="./" class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-neon-cyan to-neon-blue flex items-center justify-center shadow-lg shadow-cyan-500/20">
-                    <i class="fa-solid fa-satellite text-space-900 text-lg"></i>
-                </div>
-                <span class="text-xl font-bold tracking-wider bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">CepteUydu</span>
-            </a>
-
-            <div class="w-full md:w-auto flex items-center gap-3 md:flex-1 md:justify-end">
-                <a href="hizala.html" class="shrink-0 px-3 py-2 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-blue text-space-900 text-sm font-semibold shadow-lg shadow-cyan-500/20 hover:opacity-90 transition-opacity">
-                    <i class="fa-solid fa-crosshairs mr-1"></i><span class="hidden sm:inline">Çanak Hizala / </span>AR
-                </a>
-                <label class="relative block flex-1 md:max-w-md">
-                    <span class="sr-only">Genel arama</span>
-                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                        <i class="fa-solid fa-search"></i>
-                    </span>
-                    <input type="search" x-model.debounce.250ms="searchQuery" placeholder="Uydu, kanal, frekans veya ülke ara..." class="w-full pl-10 pr-4 py-2 bg-space-800 border border-space-700 rounded-xl text-sm focus:outline-none focus:border-neon-cyan text-white transition-colors">
-                </label>
-            </div>
-        </div>
-    </header>
-
-    <!-- Ana İçerik -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-        <div x-show="loading" class="text-center py-20">
-            <i class="fa-solid fa-satellite-dish fa-bounce text-4xl text-neon-cyan mb-4"></i>
-            <p class="text-slate-400 text-base">Veritabanı yükleniyor, lütfen bekleyin...</p>
+    <!-- ============ AÇILIŞ EKRANI (ilk açılış) ============ -->
+    <div x-show="!onboarded" x-cloak class="fixed inset-0 z-[70] bg-gradient-to-b from-navy-900 to-navy-950 text-white flex flex-col items-center justify-between px-6 overflow-hidden"
+         style="padding-top: max(1.5rem, env(safe-area-inset-top)); padding-bottom: max(2rem, env(safe-area-inset-bottom))">
+        <div class="w-full flex justify-end gap-2 text-xs">
+            <button type="button" class="px-3 py-1.5 rounded-full border border-white/30" :class="$store.app.lang === 'tr' && 'bg-white text-navy-900 font-bold'" @click="$store.app.setLang('tr')">TR</button>
+            <button type="button" class="px-3 py-1.5 rounded-full border border-white/30" :class="$store.app.lang === 'en' && 'bg-white text-navy-900 font-bold'" @click="$store.app.setLang('en')">EN</button>
         </div>
 
-        <div x-show="!loading && error" x-cloak class="text-center py-20">
-            <i class="fa-solid fa-triangle-exclamation text-4xl text-rose-400 mb-4"></i>
-            <p class="text-slate-300 text-base mb-2">Veriler yüklenemedi.</p>
-            <p class="text-slate-500 text-sm mb-6" x-text="error"></p>
-            <button @click="load()" class="px-5 py-2 bg-space-700 hover:bg-neon-cyan hover:text-space-900 rounded-xl transition-all">
-                <i class="fa-solid fa-rotate-right mr-2"></i>Tekrar Dene
-            </button>
+        <svg viewBox="0 0 320 320" class="w-[min(85vw,24rem)] h-auto" aria-hidden="true">
+            <defs>
+                <radialGradient id="shade" cx="38%" cy="35%" r="70%">
+                    <stop offset="60%" stop-color="#ffffff" stop-opacity="0"/>
+                    <stop offset="100%" stop-color="#0b1e4f" stop-opacity=".45"/>
+                </radialGradient>
+            </defs>
+            <g fill="#ffffff" opacity=".35">
+                <circle cx="30" cy="40" r="1.5"/><circle cx="290" cy="30" r="1.2"/><circle cx="270" cy="290" r="1.6"/>
+                <circle cx="40" cy="280" r="1.2"/><circle cx="160" cy="18" r="1"/><circle cx="305" cy="170" r="1.3"/>
+                <circle cx="12" cy="170" r="1"/><circle cx="210" cy="300" r="1"/>
+            </g>
+            <g class="orbit orbit-a">
+                <ellipse cx="160" cy="160" rx="150" ry="58" fill="none" stroke="#a99ff5" stroke-opacity=".5" stroke-dasharray="4 6"/>
+                <g transform="translate(298 140) rotate(30)">
+                    <rect x="-5" y="-4" width="10" height="8" rx="2" fill="#f4b740"/>
+                    <rect x="-16" y="-2.5" width="10" height="5" fill="#5bc0eb"/><rect x="6" y="-2.5" width="10" height="5" fill="#5bc0eb"/>
+                </g>
+            </g>
+            <g class="orbit orbit-b">
+                <ellipse cx="160" cy="160" rx="150" ry="58" fill="none" stroke="#a99ff5" stroke-opacity=".5" stroke-dasharray="4 6" transform="rotate(60 160 160)"/>
+                <g transform="translate(95 40) rotate(-20)">
+                    <rect x="-5" y="-4" width="10" height="8" rx="2" fill="#7bd389"/>
+                    <rect x="-16" y="-2.5" width="10" height="5" fill="#5bc0eb"/><rect x="6" y="-2.5" width="10" height="5" fill="#5bc0eb"/>
+                </g>
+            </g>
+            <g class="orbit orbit-c">
+                <ellipse cx="160" cy="160" rx="150" ry="58" fill="none" stroke="#a99ff5" stroke-opacity=".5" stroke-dasharray="4 6" transform="rotate(120 160 160)"/>
+                <g transform="translate(100 285)">
+                    <circle r="5" fill="#f6a13a"/><path d="M-9 -9a13 13 0 0 1 18 0" stroke="#f6a13a" stroke-width="1.5" fill="none"/>
+                </g>
+            </g>
+            <circle cx="160" cy="160" r="76" fill="#3fa9e0"/>
+            <path d="M110 120c14-10 30-4 38 4s22 2 26 14-8 22-20 22-14 14-28 12-22-16-20-28 0-18 4-24z" fill="#1d6fa8"/>
+            <path d="M176 196c10-8 26-6 30 4s-6 18-16 18-20-12-14-22z" fill="#1d6fa8"/>
+            <path d="M188 112c8-4 20 0 22 8s-8 10-14 8-12-12-8-16z" fill="#1d6fa8"/>
+            <path d="M126 104c6-8 22-8 24-2s-8 8-14 8-12 0-10-6z" fill="#ffffff" opacity=".9"/>
+            <circle cx="160" cy="160" r="76" fill="url(#shade)"/>
+        </svg>
+
+        <div class="text-center">
+            <h1 class="text-3xl sm:text-4xl font-bold mb-2">CepteUydu</h1>
+            <p class="text-white/70 max-w-xs mx-auto text-sm sm:text-base" x-text="t('splash.subtitle')"></p>
         </div>
 
-        <div x-show="!loading && !error" x-cloak>
-            <div class="mb-10 text-center md:text-left flex flex-col md:flex-row md:items-center md:justify-between bg-gradient-to-r from-space-800/80 to-space-700/40 p-8 rounded-3xl border border-space-700/50 shadow-2xl relative overflow-hidden">
-                <div class="absolute right-0 top-0 translate-x-10 -translate-y-10 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
-                <div class="relative z-10">
-                    <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight mb-3">Eksiksiz Uydu &amp; Frekans Kataloğu</h1>
-                    <p class="text-slate-400 max-w-xl text-sm sm:text-base">Uydulara göre ayrıştırılmış frekans ve kanal rehberi.</p>
-                </div>
-                <div class="mt-6 md:mt-0 grid grid-cols-3 gap-3 relative z-10">
-                    <div class="bg-space-900/60 border border-space-700 px-4 py-3 rounded-2xl text-center">
-                        <span class="block text-2xl font-bold text-neon-cyan" x-text="formatNumber(filteredSatellites.length)"></span>
-                        <span class="text-xs text-slate-400">Uydu</span>
-                    </div>
-                    <div class="bg-space-900/60 border border-space-700 px-4 py-3 rounded-2xl text-center">
-                        <span class="block text-2xl font-bold text-emerald-400" x-text="formatNumber(stats.active)"></span>
-                        <span class="text-xs text-slate-400">Aktif Yayın</span>
-                    </div>
-                    <div class="bg-space-900/60 border border-space-700 px-4 py-3 rounded-2xl text-center">
-                        <span class="block text-2xl font-bold text-slate-200" x-text="formatNumber(stats.total)"></span>
-                        <span class="text-xs text-slate-400">Toplam Kayıt</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sabit: Türksat Kanal Güncelleme (TKGS) / şebeke arama frekansı -->
-            <div class="mb-8 flex flex-col sm:flex-row sm:items-center gap-4 p-5 rounded-3xl border border-amber-500/30 bg-amber-500/5">
-                <div class="w-12 h-12 shrink-0 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center">
-                    <i class="fa-solid fa-thumbtack text-lg"></i>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <h2 class="font-bold text-white">Türksat Kanal Güncelleme (TKGS)</h2>
-                    <p class="text-sm text-slate-400">Türksat 4A / 5B / 6A · 42.0°E — Kanallar kaybolduysa alıcıda bu frekansla <b class="text-slate-300">şebeke araması</b> yapın. TKGS destekli alıcılar listeyi otomatik günceller.</p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <template x-for="tp in tkgs" :key="tp.text">
-                        <button type="button" @click="copyText(tp.text, tp.text)" class="font-mono text-sm px-3 py-2 rounded-xl bg-space-900/70 border border-space-700 hover:border-amber-400 transition-colors" :title="'Kopyala: ' + tp.text">
-                            <span class="text-amber-300" x-text="tp.text"></span>
-                            <span class="text-[10px] text-slate-500 ml-1" x-text="tp.note"></span>
-                            <i class="ml-1 text-[11px]" :class="copiedId === tp.text ? 'fa-solid fa-check text-emerald-400' : 'fa-regular fa-copy text-slate-500'"></i>
-                        </button>
-                    </template>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <template x-for="sat in filteredSatellites" :key="sat.name">
-                    <div class="bg-space-800/60 backdrop-blur-md border border-space-700/80 rounded-3xl p-6 hover:border-neon-cyan/60 transition-all duration-300 shadow-xl group flex flex-col justify-between">
-                        <div>
-                            <div class="flex justify-between items-start mb-4">
-                                <span class="text-xs font-semibold px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" x-text="sat.position || 'Arşiv'"></span>
-                                <span class="flex h-3 w-3 relative" x-show="sat.activeCount > 0">
-                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                                </span>
-                            </div>
-                            <h3 class="text-xl font-bold text-white group-hover:text-neon-cyan transition-colors" x-text="sat.title"></h3>
-                            <p class="text-slate-400 text-sm mt-2">
-                                <span x-text="formatNumber(sat.channels.length) + ' kayıtlı yayın'"></span>
-                                <span x-show="sat.activeCount > 0" class="text-emerald-400" x-text="' · ' + formatNumber(sat.activeCount) + ' aktif'"></span>
-                            </p>
-                            <p x-show="searchQuery && sat.matchCount" class="text-xs text-neon-cyan mt-1" x-text="formatNumber(sat.matchCount) + ' eşleşen kanal'"></p>
-                        </div>
-
-                        <div class="mt-6 flex gap-2">
-                            <button @click="openModal(sat)" class="flex-1 py-3 bg-space-700 hover:bg-neon-cyan hover:text-space-900 text-white font-medium rounded-xl transition-all flex items-center justify-center space-x-2 shadow-md">
-                                <span>Kanalları Gör &amp; Ara</span>
-                                <i class="fa-solid fa-arrow-right text-xs"></i>
-                            </button>
-                            <a x-show="sat.orbit !== null" :href="'hizala.html?konum=' + sat.orbit" title="Bu uyduya çanak hizala" class="w-12 shrink-0 bg-space-700 hover:bg-neon-cyan hover:text-space-900 text-white rounded-xl transition-all flex items-center justify-center shadow-md">
-                                <i class="fa-solid fa-crosshairs"></i>
-                                <span class="sr-only">Çanak hizala</span>
-                            </a>
-                        </div>
-                    </div>
-                </template>
-            </div>
-
-            <div x-show="filteredSatellites.length === 0" class="text-center py-16 text-slate-400">
-                <i class="fa-solid fa-satellite-dish text-4xl mb-3 text-space-600"></i>
-                <p class="text-base">Aramanıza uygun uydu veya kanal bulunamadı.</p>
-            </div>
-        </div>
-
-    </main>
-
-    <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 text-center text-xs text-slate-500">
-        Frekans bilgileri değişebilir; kurulum öncesinde güncel değerleri doğrulayın.
-    </footer>
-
-    <!-- MODAL -->
-    <div x-show="selectedSat" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4" role="dialog" aria-modal="true" :aria-label="selectedSat?.name" x-cloak>
-        <div @click.outside="closeModal()" class="bg-space-800 border border-space-700 rounded-3xl w-full max-w-5xl max-h-[95vh] sm:max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-
-            <div class="p-4 sm:p-6 border-b border-space-700 bg-space-900/80 flex flex-col gap-4">
-                <div class="flex justify-between items-center gap-3">
-                    <div class="min-w-0">
-                        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-400" x-text="formatNumber(modalFilteredChannels.length) + ' yayın listeleniyor'"></span>
-                        <h2 class="text-xl sm:text-2xl font-bold text-white mt-1 truncate" x-text="selectedSat?.name"></h2>
-                    </div>
-                    <button @click="closeModal()" aria-label="Kapat" class="w-10 h-10 shrink-0 rounded-full bg-space-700 hover:bg-space-600 flex items-center justify-center text-slate-300 transition-colors">
-                        <i class="fa-solid fa-xmark text-lg"></i>
-                    </button>
-                </div>
-
-                <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
-                    <div class="flex bg-space-900 p-1 rounded-xl border border-space-700 text-xs w-full sm:w-auto">
-                        <button @click="setStatus('all')" :class="statusFilter === 'all' ? 'bg-space-700 text-white font-bold' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-lg transition-all flex-1 sm:flex-none">Tümü</button>
-                        <button @click="setStatus('active')" :class="statusFilter === 'active' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-lg transition-all flex-1 sm:flex-none" x-text="'Aktif (' + formatNumber(selectedSat?.activeCount || 0) + ')'"></button>
-                        <button @click="setStatus('passive')" :class="statusFilter === 'passive' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold' : 'text-slate-400 hover:text-white'" class="px-3 py-1.5 rounded-lg transition-all flex-1 sm:flex-none" x-text="'Pasif (' + formatNumber((selectedSat?.channels.length || 0) - (selectedSat?.activeCount || 0)) + ')'"></button>
-                    </div>
-
-                    <label class="w-full sm:w-1/2 relative block">
-                        <span class="sr-only">Kanal ara</span>
-                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                            <i class="fa-solid fa-magnifying-glass text-xs"></i>
-                        </span>
-                        <input type="search" x-ref="modalSearch" x-model.debounce.200ms="modalSearchQuery" @input="visibleCount = PAGE_SIZE" placeholder="Kanal adı, frekans, ülke veya şifreleme ara..." class="w-full pl-9 pr-4 py-2 bg-space-800 border border-space-700 rounded-xl text-sm focus:outline-none focus:border-neon-cyan text-white transition-colors">
-                    </label>
-                </div>
-
-                <!-- Kategori filtresi (kanal adından tahmin edilir) -->
-                <div class="flex gap-2 overflow-x-auto pb-1 -mb-1 text-xs" title="Kategoriler kanal adından tahmin edilir">
-                    <button @click="setCategory('')" :class="categoryFilter === '' ? 'bg-neon-cyan text-space-900 font-bold border-neon-cyan' : 'text-slate-300 border-space-700 hover:border-neon-cyan'" class="shrink-0 px-3 py-1.5 rounded-full border transition-all">Tüm Kategoriler</button>
-                    <template x-for="cat in categories" :key="cat.key">
-                        <button x-show="categoryCounts[cat.key]" @click="setCategory(cat.key)" :class="categoryFilter === cat.key ? 'bg-neon-cyan text-space-900 font-bold border-neon-cyan' : 'text-slate-300 border-space-700 hover:border-neon-cyan'" class="shrink-0 px-3 py-1.5 rounded-full border transition-all">
-                            <i class="fa-solid mr-1" :class="cat.icon"></i><span x-text="cat.label"></span>
-                            <span class="opacity-60" x-text="formatNumber(categoryCounts[cat.key])"></span>
-                        </button>
-                    </template>
-                </div>
-            </div>
-
-            <div class="p-4 sm:p-6 overflow-y-auto flex-1" x-ref="modalBody">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" x-show="modalFilteredChannels.length > 0">
-                    <template x-for="ch in visibleChannels" :key="ch._id">
-                        <div class="bg-space-900/90 border border-space-700/80 rounded-2xl p-4 flex flex-col justify-between hover:border-neon-cyan/50 transition-all shadow-md">
-                            <div>
-                                <div class="flex justify-between items-start mb-2 gap-2">
-                                    <h4 class="font-bold text-white text-base truncate" :title="ch.name" x-text="ch.name"></h4>
-                                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-space-800 text-slate-300 border border-space-600 shrink-0" x-text="ch.country"></span>
-                                </div>
-
-                                <div class="mb-2 flex flex-wrap items-center gap-1">
-                                    <span x-show="ch.is_active" class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><i class="fa-solid fa-circle-check mr-1"></i>Aktif Yayın</span>
-                                    <span x-show="!ch.is_active" class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20"><i class="fa-solid fa-circle-xmark mr-1"></i>Pasif / Yayın Dışı</span>
-                                    <span x-show="ch.satellite !== selectedSat?.name" class="text-[10px] px-2 py-0.5 rounded bg-space-800 text-slate-400 border border-space-600" x-text="ch.satellite"></span>
-                                </div>
-
-                                <button type="button" x-show="ch.frequency" @click="copyTuning(ch)" title="Ayar bilgisini kopyala" class="w-full text-left text-xs text-neon-cyan font-mono mb-2 flex items-center gap-2 hover:text-white transition-colors">
-                                    <i class="fa-solid fa-signal text-[10px]"></i>
-                                    <span class="flex-1" x-text="tuningText(ch)"></span>
-                                    <i class="text-[11px]" :class="copiedId === ch._id ? 'fa-solid fa-check text-emerald-400' : 'fa-regular fa-copy'"></i>
-                                </button>
-                            </div>
-                            <div class="flex justify-between items-center gap-2 border-t border-space-700/60 pt-2 text-[11px] text-slate-400">
-                                <span class="truncate" :title="ch.encryption" x-text="'Şifre: ' + ch.encryption"></span>
-                                <span class="text-emerald-400 font-mono shrink-0" x-text="ch.sid ? 'SID: ' + ch.sid : ''"></span>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-
-                <div x-show="visibleCount < modalFilteredChannels.length" class="text-center mt-6">
-                    <button @click="visibleCount += PAGE_SIZE" class="px-6 py-2.5 bg-space-700 hover:bg-neon-cyan hover:text-space-900 text-white text-sm font-medium rounded-xl transition-all">
-                        Daha fazla göster
-                        <span class="text-slate-400" x-text="'(' + formatNumber(modalFilteredChannels.length - visibleCount) + ' kaldı)'"></span>
-                    </button>
-                </div>
-
-                <div x-show="modalFilteredChannels.length === 0" class="text-center py-12 text-slate-400">
-                    <i class="fa-solid fa-satellite-dish text-4xl mb-3 text-space-600"></i>
-                    <p class="text-base">Aradığınız kriterlere uygun kanal bulunamadı.</p>
-                </div>
-            </div>
-        </div>
+        <button type="button" class="px-10 py-3.5 rounded-full bg-lav-200 text-navy-900 font-semibold text-lg shadow-lg active:scale-95 transition-transform" @click="finishOnboarding()" x-text="t('splash.start')"></button>
     </div>
 
-    <script src="js/veri.js"></script>
-    <script src="js/uydu-hesap.js"></script>
-    <script src="js/kategoriler.js"></script>
+    <!-- ============ ANA EKRAN ============ -->
+    <cu-header title-key="app.name"></cu-header>
+
+    <main class="page space-y-4">
+
+        <!-- Hızlı bakış: kayıtlı konum + seçili uydu -->
+        <a href="hizala.html" class="card-link items-center gap-4 p-4 !bg-gradient-to-r from-navy-800 to-navy-600 text-white">
+            <div class="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-crosshairs text-xl"></i>
+            </div>
+            <template x-if="quick">
+                <div class="flex-1 min-w-0">
+                    <div class="text-xs text-white/70 truncate" x-text="quick.title"></div>
+                    <div class="font-semibold text-sm sm:text-base">
+                        <span x-text="t('common.az') + ' ' + fmt(quick.az) + '°'"></span> ·
+                        <span x-text="t('common.el') + ' ' + fmt(quick.el) + '°'"></span> ·
+                        <span x-text="t('common.skew') + ' ' + fmtSigned(quick.skew) + '°'"></span>
+                    </div>
+                </div>
+            </template>
+            <template x-if="!quick">
+                <div class="flex-1">
+                    <div class="font-semibold" x-text="t('home.quickEmptyTitle')"></div>
+                    <div class="text-xs text-white/70" x-text="t('home.quickEmptyText')"></div>
+                </div>
+            </template>
+            <i class="fa-solid fa-chevron-right text-white/60"></i>
+        </a>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            <template x-for="item in items" :key="item.href">
+                <a :href="item.href" class="card-link p-4 sm:p-5"
+                   :class="item.wide ? item.wide + ' items-center justify-between gap-4' : 'flex-col items-center justify-center text-center gap-3 min-h-[9.5rem]'">
+                    <div :class="item.wide ? 'min-w-0' : 'order-2'">
+                        <div class="font-semibold text-ink-900 text-[15px] sm:text-base" x-text="t(item.title)"></div>
+                        <div x-show="item.wide" class="text-xs text-ink-500 mt-0.5" x-text="item.desc ? t(item.desc) : ''"></div>
+                    </div>
+                    <div class="icon-ring" :class="item.wide ? '' : 'order-1'" :style="'--ring:' + item.ring" x-html="CepteIkon(item.icon)"></div>
+                </a>
+            </template>
+        </div>
+
+        <!-- TKGS -->
+        <a href="kanallar.html" class="card-link p-4 items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-thumbtack"></i></div>
+            <div class="flex-1 min-w-0">
+                <div class="font-semibold text-sm" x-text="t('tkgs.title')"></div>
+                <div class="text-xs text-ink-500" x-text="t('tkgs.short')"></div>
+            </div>
+            <span class="font-mono text-sm font-bold text-navy-800 bg-lav-100 rounded-lg px-2.5 py-1.5 shrink-0">12380 V 27500</span>
+        </a>
+
+        <p class="text-center text-[11px] text-ink-400 pt-2" x-show="dataInfo" x-text="dataInfo"></p>
+    </main>
+
     <script>
-        const { ARCHIVE_GROUP, normalize } = CepteVeri;
         CepteVeri.registerServiceWorker();
 
-        // "Türksat 4A (42.0°E)" -> { title: "Türksat 4A", position: "42.0°E" }
-        function splitSatelliteName(name) {
-            const m = name.match(/^(.*)\s+\(([\d.,]+\s*°\s*[EWDB])\)$/);
-            return m ? { title: m[1], position: m[2] } : { title: name, position: '' };
-        }
-
-        function satelliteApp() {
+        function homePage() {
             return {
-                PAGE_SIZE: 60,
-                loading: true,
-                error: '',
-                searchQuery: '',
-                modalSearchQuery: '',
-                statusFilter: 'all',
-                categoryFilter: '',
-                categories: CepteKategori.CATEGORIES,
-                tkgs: [
-                    { text: '12380 V 27500', note: 'TKGS / şebeke' },
-                    { text: '12423 H 30000', note: 'alternatif' },
+                onboarded: !!CepteDurum.get().onboarded,
+                info: null,
+                items: [
+                    { href: 'hizala.html', icon: 'finder', ring: '#2aa7b8', title: 'nav.finder', desc: 'home.finderDesc', wide: 'col-span-2 md:col-span-3 lg:col-span-2' },
+                    { href: 'harita.html', icon: 'map', ring: '#5bc0eb', title: 'nav.map' },
+                    { href: 'konum.html', icon: 'location', ring: '#1f3c88', title: 'nav.location' },
+                    { href: 'pusula.html', icon: 'compass', ring: '#e94b4b', title: 'nav.compass' },
+                    { href: 'terazi.html', icon: 'level', ring: '#f4b740', title: 'nav.level' },
+                    { href: 'hizala.html#ar', icon: 'ar', ring: '#7c6cf2', title: 'nav.ar' },
+                    { href: 'kanallar.html', icon: 'channels', ring: '#3a3780', title: 'nav.channels' },
+                    { href: 'alan.html', icon: 'area', ring: '#6aa84f', title: 'nav.area', desc: 'home.areaDesc', wide: 'col-span-2 md:col-span-3 lg:col-span-4' },
                 ],
-                selectedSat: null,
-                visibleCount: 60,
-                copiedId: null,
-                satellites: [],
-                stats: { total: 0, active: 0 },
+
+                get quick() {
+                    if (!CepteDurum.hasLocation()) return null;
+                    const st = CepteDurum.get();
+                    const r = UyduHesap.lookAngles(st.lat, st.lon, st.satLon);
+                    return {
+                        title: UyduHesap.formatOrbitalPosition(st.satLon) + ' · ' + (CepteKonum.locationLabel(st) || (fmt(st.lat, 3) + ', ' + fmt(st.lon, 3))),
+                        az: r.azimuth, el: r.elevation, skew: r.skew,
+                    };
+                },
+
+                // "Veri: GitHub · 06.10.2026 · 29.110 kayıt"
+                get dataInfo() {
+                    if (!this.info) return '';
+                    const m = this.info.meta || {};
+                    const date = m.surum ? new Date(m.surum).toLocaleDateString(currentLang() === 'tr' ? 'tr-TR' : 'en-GB') : '—';
+                    return t('data.info', { source: t('data.src.' + this.info.source), date, n: fmtInt(m.kayit) });
+                },
 
                 init() {
-                    this.load();
-                    this.$watch('selectedSat', sat => {
-                        document.body.style.overflow = sat ? 'hidden' : '';
-                    });
+                    // Veriyi arka planda GitHub ile eşitle (sayfa çizildikten sonra)
+                    setTimeout(async () => {
+                        try { this.info = await CepteVeri.loadWithInfo(); } catch (e) { /* veri sayfası hatayı gösterir */ }
+                    }, 400);
                 },
 
-                async load() {
-                    this.loading = true;
-                    this.error = '';
-                    try {
-                        const raw = await CepteVeri.load();
-                        this.satellites = this.prepare(raw);
-                    } catch (e) {
-                        console.error('Veri yüklenemedi:', e);
-                        this.error = e.message || String(e);
-                    } finally {
-                        this.loading = false;
-                    }
-                },
-
-                // Veriyi bir kez işleyip arama anahtarlarını önceden hazırlar.
-                prepare(raw) {
-                    let id = 0, total = 0, active = 0;
-                    const list = Object.entries(raw).map(([name, channels]) => {
-                        const prepared = (Array.isArray(channels) ? channels : []).map(c => {
-                            const ch = {
-                                satellite: c.satellite || name,
-                                name: c.name || '(adsız)',
-                                country: c.country || 'Bilinmiyor',
-                                frequency: c.frequency || '',
-                                polarization: c.polarization || '',
-                                symbol_rate: c.symbol_rate || '',
-                                fec: c.fec || '',
-                                encryption: c.encryption || 'Bilinmiyor',
-                                sid: c.sid || '',
-                                is_active: !!c.is_active,
-                                _id: id++,
-                            };
-                            ch._search = normalize([ch.name, ch.frequency, ch.country, ch.encryption, ch.sid].join(' '));
-                            ch._cats = CepteKategori.detect(normalize(ch.name));
-                            return ch;
-                        });
-                        const activeCount = prepared.filter(c => c.is_active).length;
-                        total += prepared.length;
-                        active += activeCount;
-                        return { name, ...splitSatelliteName(name), orbit: UyduHesap.parseOrbitalPosition(name), channels: prepared, activeCount, _search: normalize(name) };
-                    });
-                    this.stats = { total, active };
-                    // Arşiv grubu en sona, diğerleri alfabetik
-                    return list.sort((a, b) =>
-                        (a.name === ARCHIVE_GROUP) - (b.name === ARCHIVE_GROUP) ||
-                        a.name.localeCompare(b.name, 'tr', { numeric: true }));
-                },
-
-                get filteredSatellites() {
-                    const q = normalize(this.searchQuery.trim());
-                    if (!q) return this.satellites;
-                    const result = [];
-                    for (const sat of this.satellites) {
-                        const satMatch = sat._search.includes(q);
-                        const matchCount = sat.channels.reduce((n, c) => n + (c._search.includes(q) ? 1 : 0), 0);
-                        if (satMatch || matchCount > 0) result.push({ ...sat, matchCount });
-                    }
-                    return result;
-                },
-
-                get modalFilteredChannels() {
-                    if (!this.selectedSat) return [];
-                    let channels = this.selectedSat.channels;
-                    if (this.statusFilter === 'active') channels = channels.filter(c => c.is_active);
-                    else if (this.statusFilter === 'passive') channels = channels.filter(c => !c.is_active);
-                    if (this.categoryFilter) channels = channels.filter(c => c._cats.includes(this.categoryFilter));
-
-                    const q = normalize(this.modalSearchQuery.trim());
-                    return q ? channels.filter(c => c._search.includes(q)) : channels;
-                },
-
-                // Seçili uydu + durum filtresine göre kategori başına kanal sayısı
-                get categoryCounts() {
-                    const counts = {};
-                    if (!this.selectedSat) return counts;
-                    for (const c of this.selectedSat.channels) {
-                        if (this.statusFilter === 'active' && !c.is_active) continue;
-                        if (this.statusFilter === 'passive' && c.is_active) continue;
-                        for (const k of c._cats) counts[k] = (counts[k] || 0) + 1;
-                    }
-                    return counts;
-                },
-
-                // Çok kanallı uydularda tarayıcıyı kilitlememek için sayfalı gösterim
-                get visibleChannels() {
-                    return this.modalFilteredChannels.slice(0, this.visibleCount);
-                },
-
-                openModal(sat) {
-                    // Genel aramada uydu adı dışında bir şey arandıysa modal içinde de uygula
-                    const q = this.searchQuery.trim();
-                    this.modalSearchQuery = q && !sat._search.includes(normalize(q)) ? q : '';
-                    this.statusFilter = 'all';
-                    this.categoryFilter = '';
-                    this.visibleCount = this.PAGE_SIZE;
-                    this.selectedSat = sat;
-                    this.$nextTick(() => {
-                        this.$refs.modalBody.scrollTop = 0;
-                        if (window.matchMedia('(min-width: 768px)').matches) this.$refs.modalSearch.focus();
-                    });
-                },
-
-                closeModal() {
-                    this.selectedSat = null;
-                },
-
-                setCategory(key) {
-                    this.categoryFilter = key;
-                    this.visibleCount = this.PAGE_SIZE;
-                    this.$refs.modalBody.scrollTop = 0;
-                },
-
-                setStatus(status) {
-                    this.statusFilter = status;
-                    this.visibleCount = this.PAGE_SIZE;
-                    this.$refs.modalBody.scrollTop = 0;
-                },
-
-                tuningText(ch) {
-                    return [ch.frequency, ch.polarization, ch.symbol_rate && 'SR:' + ch.symbol_rate, ch.fec]
-                        .filter(Boolean).join(' ');
-                },
-
-                copyTuning(ch) {
-                    return this.copyText(ch.name + ' — ' + ch.satellite + ' — ' + this.tuningText(ch), ch._id);
-                },
-
-                async copyText(text, id) {
-                    try {
-                        await navigator.clipboard.writeText(text);
-                        this.copiedId = id;
-                        setTimeout(() => { if (this.copiedId === id) this.copiedId = null; }, 1500);
-                    } catch (e) {
-                        console.warn('Panoya kopyalanamadı:', e);
-                    }
-                },
-
-                formatNumber(n) {
-                    return Number(n || 0).toLocaleString('tr-TR');
+                finishOnboarding() {
+                    CepteDurum.set({ onboarded: true });
+                    this.onboarded = true;
                 },
             };
         }

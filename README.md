@@ -1,83 +1,83 @@
-# 🛰️ CepteUydu - Modern Uydu ve Kanal Kataloğu
+# 🛰️ CepteUydu — Uydu Bulucu / Satellite Finder
 
-**CepteUydu**, modern web teknolojileriyle geliştirilmiş, uydulara göre ayrıştırılmış frekans ve kanal rehberidir. Şifrelenmiş veri dosyalarını güvenli bir şekilde çözerek kullanıcıya hızlı ve şık bir arayüz üzerinden sunar.
+Çanak anten kurulum asistanı ve uydu frekans rehberi. Tek kod tabanı; **web sitesi (PWA)** ve
+**Android uygulaması (Google Play)** olarak çalışır. Türkçe ve İngilizce, telefon ve tablet uyumlu.
 
-## 🚀 Öne Çıkan Özellikler
+*Satellite dish setup assistant and frequency guide — one codebase for the web (PWA) and Android (Google Play), in Turkish and English.*
 
-* **Dinamik Uydu Listeleme:** Uyduları kartlar halinde görüntüler ve toplam kayıtlı yayın sayılarını gösterir.
-* **Gelişmiş Kanal Filtreleme:** Uydu içerisindeki kanalları **Aktif** veya **Pasif / Yayın Dışı** olarak filtreleme imkanı.
-* **Hızlı Arama:** Hem ana sayfada genel uydu/kanal araması hem de modal içinde detaylı kanal, frekans ve ülke araması.
-* **Kodlanmış Veri Dosyası:** Veriler Base64 ile kodlanmış JSON (`.enc`) olarak saklanır ve tarayıcıda çözülür. (Bu bir şifreleme değildir; yalnızca dosyanın doğrudan okunmasını zorlaştırır.)
-* **Akıllı Arama:** Türkçe karakter duyarsız arama (`turkiye` → `Türkiye`, `sifresiz` → `Şifresiz`); kanal adı, frekans, ülke, şifreleme ve SID üzerinde çalışır.
-* **Hızlı Liste:** Binlerce kanallı listeler sayfalı ("Daha fazla göster") yüklenir; ayar bilgisi tek tıkla panoya kopyalanır.
-* **Modern Tasarım:** Tailwind CSS ile oluşturulmuş karanlık mod (Dark Mode) uyumlu uzay temalı arayüz.
+## 📱 Ekranlar
 
-## 📡 Çanak Kurulum Asistanı (`hizala.html`)
+| Ekran | Dosya | Ne yapar |
+|---|---|---|
+| Açılış + Ana sayfa | `index.html` | İlk açılışta tanıtım ekranı, ardından özellik kartları ve hızlı bakış (kayıtlı konum için açılar) |
+| Uydu Bulucu | `hizala.html` | Azimut (gerçek + pusula), elevasyon, LNB skew görseli, mesafe; **AR kamera** ile uyduyu bulma, engel kontrolü, sesli hizalama |
+| Uydu Haritası | `harita.html` | Haritaya dokunarak kurulum yerini seçme, çanağın bakacağı yönü çizgiyle gösterme |
+| Konumum | `konum.html` | GPS koordinatı (ondalık + derece/dakika), doğruluk, rakım, paylaşma; buradan görünen tüm uydular |
+| Pusula | `pusula.html` | Gerçek kuzeye göre pusula, seçili uydunun yönü ve "sağa/sola dön" yönlendirmesi |
+| Su Terazisi | `terazi.html` | Direk/ayak için kabarcıklı terazi (kalibrasyonlu) ve çanak kolu için açı ölçer |
+| Frekans Rehberi | `kanallar.html` | 78 uydu, 29.110 kayıt; arama, aktif/pasif ve kategori filtresi, TKGS frekansı, ayar bilgisini kopyalama |
+| Alan Hesaplama | `alan.html` | Haritada arazi/çatı alanı (m², dönüm/acre, hektar) ve çevre |
+| Gizlilik | `gizlilik.html` | Play Store için iki dilli gizlilik politikası |
 
-* **Açı Hesaplayıcı:** GPS, şehir listesi veya elle girilen koordinata göre seçilen uydu için azimut (gerçek ve pusula/manyetik), elevasyon, **LNB skew** açısı ve uyduya mesafe. Hesap WGS84 elipsoidi üzerinde vektörel yapılır (`js/uydu-hesap.js`).
-* **LNB Görseli:** LNB'nin hangi yöne, kaç derece döndürüleceği çizimle gösterilir.
-* **AR Uydu Bulucu:** Kamera görüntüsü üzerinde hedef uydu, diğer uydular, ufuk çizgisi ve Clarke kuşağı çizilir. Uydunun önüne bina/ağaç girip girmediği kurulumdan önce görülür.
-* **Sesli Hizalama:** Telefon uydu yönüne yaklaştıkça bip sesi sıklaşır (park sensörü gibi), 2° içinde sürekli ses ve titreşim.
-* **Kalibrasyon:** Manyetik sapma (deklinasyon), pusula ince ayarı ve kamera görüş açısı ayarlanabilir.
+## 🗂️ Veri: GitHub'dan
 
-## 📲 Mobil Uygulama (PWA) ve Çevrimdışı Çalışma
-
-* `manifest.webmanifest` sayesinde site telefona "Ana ekrana ekle" ile uygulama gibi kurulur.
-* `sw.js` (service worker) uygulama dosyalarını ve veri dosyasını ilk açılışta önbelleğe alır; sonrasında **internetsiz** çalışır. Veri dosyası her açılışta ağdan tazelenir, ağ yoksa son kopya kullanılır.
-* Kamera ve pusula erişimi için site **HTTPS** üzerinden yayınlanmalıdır (ör. GitHub Pages). iOS'ta hareket sensörü izni "AR" düğmesine basınca istenir.
-
-## 🛰️ Diğer Özellikler
-
-* **TKGS Sabit Kartı:** Türksat şebeke arama frekansları (12380 V 27500, alternatif 12423 H 30000) ana sayfada sabit ve tek tıkla kopyalanabilir.
-* **Kategori Filtresi:** Spor, Haber, Belgesel, Film & Dizi, Çocuk, Müzik, Radyo, 4K/UHD, HD. Veride kategori alanı olmadığından kanal adından tahmin edilir (`js/kategoriler.js`).
-
-## 🛠️ Kullanılan Teknolojiler
-
-Projede kullanılan kütüphane ve teknolojiler:
-
-* **HTML5 / CSS3**
-* **Tailwind CSS** (Stil ve tasarım)
-* **Alpine.js** (Reaktif arayüz ve uygulama mantığı)
-* **FontAwesome** (İkonlar)
-* **JavaScript (ES6+)** (Veri çözme, filtreleme, açı hesapları)
-* **Web API'leri:** Geolocation, DeviceOrientation, getUserMedia (kamera), Web Audio, Service Worker, Wake Lock
-
-## 📁 Proje Dosya Yapısı
-
-```text
-uydufrekans/
-│
-├── index.html                  # Frekans rehberi
-├── hizala.html                 # Çanak kurulum asistanı ve AR uydu bulucu
-├── uydulara_gore_kanallar.enc  # Base64 kodlu uydu ve kanal veri tabanı
-├── js/
-│   ├── veri.js                 # Veri yükleme/çözme, arama normalizasyonu
-│   ├── uydu-hesap.js           # Azimut / elevasyon / LNB skew hesapları
-│   ├── ar-yon.js               # AR motoru: sensörler, projeksiyon, bip sesi
-│   └── kategoriler.js          # Kanal adından kategori tahmini
-├── sw.js                       # Service worker (çevrimdışı önbellek)
-├── manifest.webmanifest        # PWA tanımı
-├── icon.svg, icons/            # Uygulama simgeleri
-├── scripts/
-│   └── veri_araci.py           # Veri dosyasını çözme / kodlama / temizleme aracı
-└── README.md                   # Proje açıklama dosyası
-```
-
-## ▶️ Yerelde Çalıştırma
-
-Sayfa veriyi `fetch` ile yüklediği için `index.html` dosyası doğrudan (`file://`) açılınca çalışmaz; basit bir sunucu kullanın:
-
-```bash
-python3 -m http.server 8000
-# Tarayıcıda: http://localhost:8000
-```
-
-## 🗂️ Veriyi Güncelleme
+Uydu ve kanal verisi `uydulara_gore_kanallar.enc` (Base64 kodlu JSON) ve sürüm bilgisi `veri-surum.json`
+dosyalarındadır. Uygulama her açılışta GitHub'daki `main` dalında `veri-surum.json`'u kontrol eder; sürüm
+yeniyse veriyi indirip cihazda saklar. İnternet yoksa cihazdaki son kopya, o da yoksa uygulamayla gelen
+kopya kullanılır. **Veriyi güncellemek için Play Store güncellemesi gerekmez.**
 
 ```bash
 python3 scripts/veri_araci.py coz        # .enc -> kanallar.json (düzenlemek için)
-python3 scripts/veri_araci.py kodla      # kanallar.json -> .enc
-python3 scripts/veri_araci.py temizle    # Uydu/ülke/şifreleme adlarını standartlaştırır
+python3 scripts/veri_araci.py kodla      # kanallar.json -> .enc  (+ veri-surum.json)
+python3 scripts/veri_araci.py temizle    # Uydu/ülke/şifreleme adlarını standartlaştırır (+ veri-surum.json)
+python3 scripts/veri_araci.py surum      # Yalnızca veri-surum.json'u yeniler
 ```
 
-Veri dosyasındaki her kayıt şu alanları içerir: `satellite`, `name`, `country`, `frequency`, `polarization`, `symbol_rate`, `fec`, `encryption`, `sid`, `is_active`.
+## 🛠️ Teknoloji
+
+* **HTML + Alpine.js + Tailwind CSS** (derlenmiş, CDN'siz — `vendor/`, `css/app.css`)
+* **Leaflet + OpenStreetMap** (haritalar), **Font Awesome** (simgeler)
+* **Capacitor 8** (Android paketi, `android/`)
+* Web API'leri: Geolocation, DeviceOrientation, getUserMedia, Web Audio, Service Worker, Cache API, Wake Lock
+* Açı hesapları WGS84 üzerinde vektörel (`js/uydu-hesap.js`)
+
+## 📁 Dosya yapısı
+
+```text
+uydufrekans/
+├── *.html                    # Ekranlar (yukarıdaki tablo)
+├── js/
+│   ├── ortak.js              # Ortak durum, TR/EN çeviri (t), üst bar + menü, konum
+│   ├── dil.js                # Türkçe / İngilizce metinler
+│   ├── veri.js               # GitHub'dan veri + önbellek
+│   ├── uydu-hesap.js         # Azimut / elevasyon / LNB skew
+│   ├── ar-yon.js             # AR motoru: sensörler, projeksiyon, bip sesi
+│   ├── sensor.js             # Pusula / eğim sensörü
+│   ├── harita-ortak.js       # Leaflet yardımcıları, alan hesabı
+│   ├── kategoriler.js        # Kanal adından kategori tahmini
+│   └── ikonlar.js            # Ana ekran simgeleri
+├── css/kaynak.css → css/app.css   # Tailwind kaynak → derlenmiş stil
+├── vendor/                   # Alpine, Leaflet, Font Awesome (npm'den kopyalanır)
+├── android/                  # Capacitor Android projesi
+├── store/                    # Play Store simgesi, öne çıkan görsel, mağaza metinleri
+├── docs/GOOGLE_PLAY.md       # Play Store'a yükleme rehberi
+├── scripts/                  # Veri aracı, derleme, dil kontrolü, simge üretimi
+├── sw.js, manifest.webmanifest
+├── uydulara_gore_kanallar.enc, veri-surum.json
+└── .github/workflows/android.yml  # Her gönderimde APK + AAB derler
+```
+
+## ▶️ Çalıştırma
+
+```bash
+python3 -m http.server 8000          # http://localhost:8000
+```
+
+Geliştirme için: `npm install`, `npm run build` (vendor + CSS + www), `npm run css:watch`.
+Kamera ve pusula için site HTTPS üzerinden açılmalıdır (GitHub Pages veya Android uygulaması).
+
+## 🤖 Android / Google Play
+
+Her gönderimde GitHub Actions telefona kurulabilen bir **test APK'sı** ve Play Console'a yüklenecek
+**AAB** paketi üretir (Actions → Android derleme → Artifacts). İmzalama, mağaza girişi, veri güvenliği
+formu ve kapalı test adımları için: **[docs/GOOGLE_PLAY.md](docs/GOOGLE_PLAY.md)**

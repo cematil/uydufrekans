@@ -1,0 +1,25 @@
+{
+  "name": "cepteuydu",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CepteUydu - Uydu bulucu, çanak hizalama ve frekans rehberi (TR/EN)",
+  "scripts": {
+    "css": "tailwindcss -c tailwind.config.js -i css/kaynak.css -o css/app.css --minify",
+    "css:watch": "tailwindcss -c tailwind.config.js -i css/kaynak.css -o css/app.css --watch",
+    "vendor": "node scripts/vendor.mjs",
+    "build": "npm run vendor && npm run css && node scripts/build-www.mjs",
+    "android": "npm run build && npx cap sync android",
+    "serve": "python3 -m http.server 8000"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/core": "^8.5.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.2",
+    "@fortawesome/fontawesome-free": "^7.3.1",
+    "alpinejs": "^3.17.4",
+    "leaflet": "^1.9.4",
+    "tailwindcss": "^3.4.19"
+  }
+}

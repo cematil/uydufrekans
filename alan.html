@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#282660">
+    <title>CepteUydu</title>
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+    <link rel="stylesheet" href="css/app.css">
+    <script src="js/dil.js"></script>
+    <script src="js/ortak.js"></script>
+    <script src="js/harita-ortak.js"></script>
+    <script src="vendor/leaflet/leaflet.js"></script>
+    <script defer src="vendor/alpine.min.js"></script>
+</head>
+<body x-data="areaPage()">
+    <cu-header title-key="nav.area" back></cu-header>
+
+    <div class="map-page relative">
+        <div x-ref="map" class="absolute inset-0 z-0 bg-slate-200"></div>
+
+        <div class="absolute top-3 left-3 right-16 z-[500] flex pointer-events-none">
+            <div class="pointer-events-auto bg-white/95 rounded-full shadow-card px-4 py-2 text-xs text-ink-700" x-text="t('area.hint')"></div>
+        </div>
+
+        <div class="absolute left-0 right-0 bottom-0 z-[500] p-3 sm:p-4" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom))">
+            <div class="card p-4 max-w-xl mx-auto">
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="stat !p-2"><div class="stat-label" x-text="t('area.m2')"></div><div class="font-bold text-navy-800 text-sm" x-text="fmtInt(Math.round(area))"></div></div>
+                    <div class="stat !p-2"><div class="stat-label" x-text="t('area.unit2')"></div><div class="font-bold text-navy-800 text-sm" x-text="fmt(currentLang() === 'tr' ? area / 1000 : area / 4046.8564224, 2)"></div></div>
+                    <div class="stat !p-2"><div class="stat-label" x-text="t('area.ha')"></div><div class="font-bold text-navy-800 text-sm" x-text="fmt(area / 10000, 3)"></div></div>
+                </div>
+                <div class="flex items-center justify-between mt-3 text-xs text-ink-500">
+                    <span x-text="t('area.points', { n: count }) + ' · ' + t('area.perimeter', { v: fmtInt(Math.round(perimeter)) })"></span>
+                    <div class="flex gap-2">
+                        <button type="button" @click="undo()" :disabled="!count" class="btn-soft !py-1.5 !px-3 text-xs"><i class="fa-solid fa-rotate-left"></i><span x-text="t('area.undo')"></span></button>
+                        <button type="button" @click="clear()" :disabled="!count" class="btn-soft !py-1.5 !px-3 text-xs"><i class="fa-solid fa-trash"></i><span x-text="t('area.clear')"></span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function areaPage() {
+            const s = CepteDurum.get();
+            let map = null, layers = null;
+            let points = [];
+            return {
+                area: 0, perimeter: 0, count: 0,
+
+                init() {
+                    const hasLoc = CepteDurum.hasLocation();
+                    map = CepteHarita.createMap(this.$refs.map, hasLoc ? [s.lat, s.lon] : [39.0, 35.0], hasLoc ? 18 : 6);
+                    layers = L.layerGroup().addTo(map);
+                    map.on('click', e => { points.push([e.latlng.lat, e.latlng.lng]); this.update(); });
+                },
+
+                update() {
+                    layers.clearLayers();
+                    if (points.length >= 3) L.polygon(points, { color: '#7c6cf2', weight: 3, fillOpacity: 0.25 }).addTo(layers);
+                    else if (points.length === 2) L.polyline(points, { color: '#7c6cf2', weight: 3 }).addTo(layers);
+                    points.forEach(p => L.circleMarker(p, { radius: 6, color: '#fff', weight: 2, fillColor: '#282660', fillOpacity: 1 }).addTo(layers));
+                    this.count = points.length;
+                    this.area = CepteHarita.polygonArea(points);
+                    let per = 0;
+                    for (let i = 1; i < points.length; i++) per += CepteHarita.haversine(points[i - 1], points[i]);
+                    if (points.length >= 3) per += CepteHarita.haversine(points[points.length - 1], points[0]);
+                    this.perimeter = per;
+                },
+
+                undo() { points.pop(); this.update(); },
+                clear() { points = []; this.update(); },
+            };
+        }
+    </script>
+</body>
+</html>

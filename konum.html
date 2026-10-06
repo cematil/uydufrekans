@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#282660">
+    <title>CepteUydu</title>
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/app.css">
+    <script src="js/dil.js"></script>
+    <script src="js/ortak.js"></script>
+    <script src="js/uydu-hesap.js"></script>
+    <script src="js/veri.js"></script>
+    <script defer src="vendor/alpine.min.js"></script>
+</head>
+<body x-data="locationPage()">
+    <cu-header title-key="nav.location" back></cu-header>
+
+    <main class="page grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        <section class="card p-5 text-center">
+            <div class="w-20 h-20 mx-auto rounded-full bg-lav-100 text-navy-800 flex items-center justify-center text-3xl mb-3">
+                <i class="fa-solid fa-location-dot"></i>
+            </div>
+            <template x-if="hasLocation">
+                <div>
+                    <div class="text-xl sm:text-2xl font-bold text-navy-800 tabular-nums break-words" x-text="fmt(lat, 5) + ', ' + fmt(lon, 5)"></div>
+                    <div class="text-sm text-ink-500 font-mono mt-1" x-text="dms(lat, 'lat') + '  ' + dms(lon, 'lon')"></div>
+                    <div class="text-xs text-ink-400 mt-1" x-text="locNote"></div>
+                    <div class="grid grid-cols-2 gap-2 mt-4 text-left">
+                        <div class="stat"><div class="stat-label" x-text="t('loc.accuracy')"></div><div class="font-bold text-navy-800" x-text="accuracy ? '±' + fmtInt(Math.round(accuracy)) + ' m' : '—'"></div></div>
+                        <div class="stat"><div class="stat-label" x-text="t('loc.altitude')"></div><div class="font-bold text-navy-800" x-text="Number.isFinite(altitude) ? fmtInt(Math.round(altitude)) + ' m' : '—'"></div></div>
+                        <div class="stat"><div class="stat-label" x-text="t('find.declination')"></div><div class="font-bold text-navy-800" x-text="fmtSigned(declination) + '°'"></div></div>
+                        <div class="stat"><div class="stat-label" x-text="t('loc.visibleCount')"></div><div class="font-bold text-navy-800" x-text="fmtInt(visible.length)"></div></div>
+                    </div>
+                </div>
+            </template>
+            <p x-show="!hasLocation" class="text-ink-500 mb-2" x-text="t('loc.none')"></p>
+            <p x-show="gpsError" class="text-sm text-rose-600 mt-3" x-text="gpsError"></p>
+
+            <button type="button" @click="locate()" :disabled="gpsBusy" class="btn-primary w-full mt-4">
+                <i class="fa-solid" :class="gpsBusy ? 'fa-spinner fa-spin' : 'fa-location-crosshairs'"></i>
+                <span x-text="gpsBusy ? t('loc.locating') : (hasLocation ? t('loc.refresh') : t('loc.useGps'))"></span>
+            </button>
+            <div class="grid grid-cols-3 gap-2 mt-2" x-show="hasLocation">
+                <button type="button" @click="copy()" class="btn-soft !px-2 text-sm"><i class="fa-solid" :class="copied ? 'fa-check' : 'fa-copy'"></i><span x-text="t('common.copy')"></span></button>
+                <button type="button" @click="share()" class="btn-soft !px-2 text-sm"><i class="fa-solid fa-share-nodes"></i><span x-text="t('common.share')"></span></button>
+                <a :href="mapsUrl" target="_blank" rel="noopener" class="btn-soft !px-2 text-sm"><i class="fa-solid fa-map"></i><span x-text="t('loc.openMaps')"></span></a>
+            </div>
+        </section>
+
+        <section class="card p-4 sm:p-5" x-show="hasLocation">
+            <h2 class="section-title" x-text="t('loc.visibleTitle')"></h2>
+            <p class="text-xs text-ink-400 mb-3" x-text="t('loc.visibleHelp')"></p>
+            <div class="divide-y divide-slate-100">
+                <template x-for="v in visible" :key="v.lon">
+                    <a :href="'hizala.html?konum=' + v.lon" class="flex items-center gap-3 py-2.5 hover:bg-lav-50 -mx-2 px-2 rounded-lg">
+                        <div class="w-16 text-xs font-bold text-navy-800 shrink-0" x-text="UyduHesap.formatOrbitalPosition(v.lon)"></div>
+                        <div class="flex-1 min-w-0 text-sm truncate" x-text="v.names.join(', ')"></div>
+                        <div class="text-right text-xs tabular-nums shrink-0">
+                            <div><span class="text-ink-400">Az</span> <b x-text="fmt(v.az) + '°'"></b></div>
+                            <div><span class="text-ink-400">El</span> <b :class="v.el < 10 ? 'text-amber-600' : ''" x-text="fmt(v.el) + '°'"></b></div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-ink-400 text-xs"></i>
+                    </a>
+                </template>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        CepteVeri.registerServiceWorker();
+
+        function locationPage() {
+            const s = CepteDurum.get();
+            return {
+                lat: s.lat, lon: s.lon, loc: s.loc,
+                accuracy: s.loc && s.loc.acc, altitude: null,
+                declination: s.declination ?? 0,
+                positions: CepteVeri.FALLBACK_POSITIONS.slice(),
+                gpsBusy: false, gpsError: '', copied: false,
+
+                async init() {
+                    this.positions = await CepteVeri.loadPositions();
+                    if (!this.hasLocation) this.locate();
+                },
+
+                get hasLocation() { return Number.isFinite(this.lat) && Number.isFinite(this.lon); },
+                get locNote() { this.$store.app.lang; return CepteKonum.locationLabel({ loc: this.loc }); },
+                get text() { return this.lat.toFixed(5) + ', ' + this.lon.toFixed(5); },
+                get mapsUrl() { return this.hasLocation ? 'https://www.openstreetmap.org/?mlat=' + this.lat + '&mlon=' + this.lon + '#map=17/' + this.lat + '/' + this.lon : '#'; },
+
+                // Bu konumdan görünen uydular (elevasyon > 0), doğudan batıya
+                get visible() {
+                    if (!this.hasLocation) return [];
+                    return this.positions
+                        .map(p => { const r = UyduHesap.lookAngles(this.lat, this.lon, p.lon); return { ...p, az: r.azimuth, el: r.elevation }; })
+                        .filter(p => p.el > 0);
+                },
+
+                dms(v, axis) {
+                    const hemi = axis === 'lat' ? (v >= 0 ? t('dir.N') : t('dir.S')) : (v >= 0 ? t('dir.E') : t('dir.W'));
+                    const a = Math.abs(v), d = Math.floor(a), mf = (a - d) * 60, m = Math.floor(mf), sec = (mf - m) * 60;
+                    return d + '°' + String(m).padStart(2, '0') + "'" + sec.toFixed(1).padStart(4, '0') + '"' + hemi;
+                },
+
+                async locate() {
+                    this.gpsBusy = true;
+                    this.gpsError = '';
+                    try {
+                        const p = await CepteKonum.locate();
+                        this.lat = p.lat; this.lon = p.lon; this.accuracy = p.accuracy; this.altitude = p.altitude;
+                        this.loc = { type: 'gps', acc: p.accuracy };
+                        CepteKonum.saveLocation(p.lat, p.lon, this.loc);
+                        this.declination = CepteDurum.get().declination;
+                    } catch (e) {
+                        this.gpsError = CepteKonum.locateErrorText(e);
+                    } finally {
+                        this.gpsBusy = false;
+                    }
+                },
+
+                async copy() {
+                    try {
+                        await navigator.clipboard.writeText(this.text);
+                        this.copied = true;
+                        setTimeout(() => { this.copied = false; }, 1500);
+                    } catch (e) { /* yok say */ }
+                },
+
+                async share() {
+                    const data = { title: 'CepteUydu', text: t('loc.shareText', { c: this.text }), url: this.mapsUrl };
+                    if (navigator.share) { try { await navigator.share(data); } catch (e) { /* iptal */ } }
+                    else this.copy();
+                },
+            };
+        }
+    </script>
+</body>
+</html>

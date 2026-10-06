@@ -1,2 +1,6 @@
 kanallar.json
 __pycache__/
+node_modules/
+www/
+*.jks
+*.keystore

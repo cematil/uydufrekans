@@ -1,21 +1,67 @@
 {
-  "name": "CepteUydu - Uydu Frekans Rehberi ve Çanak Hizalama",
+  "name": "CepteUydu - Uydu Bulucu / Satellite Finder",
   "short_name": "CepteUydu",
-  "description": "Uydu frekans rehberi, çanak anten açı hesaplayıcı ve AR uydu bulucu.",
+  "description": "Uydu bulucu, çanak hizalama, AR kamera, pusula ve frekans rehberi. Satellite finder, dish alignment, AR, compass and frequency guide.",
   "lang": "tr",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0b0f19",
-  "theme_color": "#0b0f19",
+  "background_color": "#1f1d4d",
+  "theme_color": "#282660",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
   ],
   "shortcuts": [
-    { "name": "Çanak Hizala / AR", "url": "hizala.html", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+    {
+      "name": "Uydu Bulucu / Satellite Finder",
+      "url": "hizala.html",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "AR",
+      "url": "hizala.html#ar",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Frekans Rehberi / Frequency Guide",
+      "url": "kanallar.html",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
   ]
 }

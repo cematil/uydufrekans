@@ -1,197 +1,150 @@
 <!DOCTYPE html>
-<html lang="tr" class="dark">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="CepteUydu Kurulum Asistanı: konumunuza göre çanak anten azimut, elevasyon ve LNB skew açısı; kamera ile artırılmış gerçeklik (AR) uydu bulucu ve sesli hizalama.">
-    <meta name="theme-color" content="#0b0f19">
-    <title>CepteUydu - Çanak Hizalama &amp; AR Uydu Bulucu</title>
+    <meta name="description" content="Çanak anten azimut, elevasyon ve LNB skew hesaplayıcı; AR kamera ile uydu bulucu ve sesli hizalama. Dish alignment calculator and AR satellite finder.">
+    <meta name="theme-color" content="#282660">
+    <title>CepteUydu</title>
     <link rel="icon" href="icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="manifest" href="manifest.webmanifest">
-
-    <style>
-        [x-cloak] { display: none !important; }
-        .ar-root { position: fixed; inset: 0; z-index: 60; background: #02040a; overflow: hidden; touch-action: none; }
-        .ar-root video, .ar-root canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-        .ar-root video { object-fit: cover; }
-        .ar-hud { position: absolute; left: 0; right: 0; padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top)); }
-        .ar-bottom { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
-        input[type=range] { accent-color: #06b6d4; }
-    </style>
-
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        if (window.tailwind) tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        space: { 900: '#0b0f19', 800: '#111827', 700: '#1f2937', 600: '#374151' },
-                        neon: { cyan: '#06b6d4', blue: '#3b82f6' }
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Alpine.js -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/app.css">
+    <script src="js/dil.js"></script>
+    <script src="js/ortak.js"></script>
+    <script src="js/uydu-hesap.js"></script>
+    <script src="js/veri.js"></script>
+    <script src="js/ar-yon.js"></script>
+    <script defer src="vendor/alpine.min.js"></script>
 </head>
-<body class="bg-space-900 text-slate-100 font-sans min-h-screen" x-data="alignApp()" @keydown.escape.window="closeAr()">
+<body x-data="finderPage()" @keydown.escape.window="closeAr()">
+    <cu-header title-key="nav.finder" back></cu-header>
 
-    <noscript>
-        <p class="p-6 text-center text-rose-400">Bu sayfanın çalışması için JavaScript'in etkin olması gerekir.</p>
-    </noscript>
+    <main class="page">
+        <div class="grid grid-cols-1 lg:grid-cols-[22rem_minmax(0,1fr)] gap-4 items-start">
 
-    <header class="sticky top-0 z-40 backdrop-blur-md bg-space-900/80 border-b border-space-700">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
-            <a href="./" class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-neon-cyan to-neon-blue flex items-center justify-center shadow-lg shadow-cyan-500/20">
-                    <i class="fa-solid fa-satellite text-space-900 text-lg"></i>
-                </div>
-                <span class="text-xl font-bold tracking-wider bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">CepteUydu</span>
-            </a>
-            <a href="./" class="text-sm text-slate-400 hover:text-white transition-colors">
-                <i class="fa-solid fa-list mr-1"></i>Frekans Rehberi
-            </a>
-        </div>
-    </header>
+            <!-- Sol: uydu + konum -->
+            <div class="space-y-4">
+                <section class="card p-4 sm:p-5">
+                    <h2 class="section-title"><span class="text-lav-500 mr-1">1</span><span x-text="t('find.satellite')"></span></h2>
+                    <select x-model.number="satLon" class="field" :aria-label="t('find.satellite')">
+                        <template x-for="p in positions" :key="p.lon">
+                            <option :value="p.lon" :selected="p.lon === satLon" x-text="p.label"></option>
+                        </template>
+                    </select>
+                    <details class="mt-3 text-sm">
+                        <summary class="cursor-pointer text-ink-500" x-text="t('find.customLon')"></summary>
+                        <div class="mt-2 flex gap-2">
+                            <input type="number" step="0.1" min="-180" max="180" x-model.number="customLon" :placeholder="t('find.customLonPh')" class="field flex-1">
+                            <button type="button" @click="applyCustomLon()" class="btn-soft" x-text="t('common.apply')"></button>
+                        </div>
+                        <p class="text-xs text-ink-400 mt-1" x-text="t('find.customLonHint')"></p>
+                    </details>
+                </section>
 
-    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-
-        <div>
-            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight mb-2">Çanak Kurulum Asistanı</h1>
-            <p class="text-slate-400 text-sm sm:text-base">Konumunuza göre azimut, elevasyon ve LNB açısını hesaplayın; kamerayı gökyüzüne tutarak uydunun yerini ve önünde engel olup olmadığını görün.</p>
-        </div>
-
-        <!-- 1. Uydu ve konum -->
-        <section class="grid md:grid-cols-2 gap-6">
-            <div class="bg-space-800/60 border border-space-700/80 rounded-3xl p-6">
-                <h2 class="font-bold text-lg mb-4"><span class="text-neon-cyan mr-2">1</span>Uydu</h2>
-                <label class="block text-xs text-slate-400 mb-1" for="satSelect">Yörünge konumu</label>
-                <select id="satSelect" x-model.number="satLon" class="w-full px-3 py-2.5 bg-space-900 border border-space-700 rounded-xl text-sm focus:outline-none focus:border-neon-cyan">
-                    <template x-for="p in positions" :key="p.lon">
-                        <option :value="p.lon" :selected="p.lon === satLon" x-text="p.label"></option>
-                    </template>
-                </select>
-                <p class="text-xs text-slate-500 mt-2" x-show="currentPosition" x-text="currentPosition ? currentPosition.names.join(', ') : ''"></p>
-
-                <details class="mt-4 text-sm">
-                    <summary class="cursor-pointer text-slate-400 hover:text-white">Listede olmayan bir konum gir</summary>
-                    <div class="mt-3 flex gap-2">
-                        <input type="number" step="0.1" min="-180" max="180" x-model.number="customLon" placeholder="ör. 42.0 veya -7.0" class="flex-1 px-3 py-2 bg-space-900 border border-space-700 rounded-xl text-sm focus:outline-none focus:border-neon-cyan">
-                        <button @click="applyCustomLon()" class="px-4 py-2 bg-space-700 hover:bg-neon-cyan hover:text-space-900 rounded-xl transition-all">Uygula</button>
+                <section class="card p-4 sm:p-5">
+                    <h2 class="section-title"><span class="text-lav-500 mr-1">2</span><span x-text="t('find.location')"></span></h2>
+                    <button type="button" @click="locate()" :disabled="gpsBusy" class="btn-primary w-full mb-2">
+                        <i class="fa-solid" :class="gpsBusy ? 'fa-spinner fa-spin' : 'fa-location-crosshairs'"></i>
+                        <span x-text="gpsBusy ? t('loc.locating') : t('loc.useGps')"></span>
+                    </button>
+                    <p x-show="gpsError" class="text-xs text-rose-600 mb-2" x-text="gpsError"></p>
+                    <select @change="pickCity($event.target.value); $event.target.value = ''" class="field mb-2" :aria-label="t('loc.pickCity')">
+                        <option value="" x-text="t('loc.pickCity')"></option>
+                        <template x-for="(c, i) in cities" :key="c.name">
+                            <option :value="i" x-text="c.name"></option>
+                        </template>
+                    </select>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="text-xs text-ink-500"><span x-text="t('common.lat')"></span>
+                            <input type="number" step="0.0001" min="-90" max="90" x-model.number="lat" @change="manualLocation()" class="field mt-1">
+                        </label>
+                        <label class="text-xs text-ink-500"><span x-text="t('common.lon')"></span>
+                            <input type="number" step="0.0001" min="-180" max="180" x-model.number="lon" @change="manualLocation()" class="field mt-1">
+                        </label>
                     </div>
-                    <p class="text-xs text-slate-500 mt-1">Doğu (E) için pozitif, Batı (W) için negatif değer girin.</p>
-                </details>
+                    <p class="text-xs text-ink-400 mt-2" x-show="locNote" x-text="locNote"></p>
+                    <a href="harita.html" class="text-xs text-lav-600 font-semibold mt-2 inline-block"><i class="fa-solid fa-map-location-dot mr-1"></i><span x-text="t('find.pickOnMap')"></span></a>
+                </section>
             </div>
 
-            <div class="bg-space-800/60 border border-space-700/80 rounded-3xl p-6">
-                <h2 class="font-bold text-lg mb-4"><span class="text-neon-cyan mr-2">2</span>Konum</h2>
-                <button @click="locate()" :disabled="gpsBusy" class="w-full py-2.5 mb-3 bg-gradient-to-r from-neon-cyan to-neon-blue text-space-900 font-semibold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60">
-                    <i class="fa-solid" :class="gpsBusy ? 'fa-spinner fa-spin' : 'fa-location-crosshairs'"></i>
-                    <span x-text="gpsBusy ? 'Konum alınıyor...' : 'GPS ile Konumumu Bul'"></span>
-                </button>
-                <p x-show="gpsError" class="text-xs text-rose-400 mb-3" x-text="gpsError"></p>
+            <!-- Sağ: sonuçlar -->
+            <div class="space-y-4">
+                <section x-show="result" x-cloak class="card p-4 sm:p-5">
+                    <h2 class="section-title"><span class="text-lav-500 mr-1">3</span><span x-text="t('find.angles')"></span>
+                        <span class="normal-case font-normal tracking-normal" x-text="currentPosition ? '— ' + currentPosition.label : ''"></span>
+                    </h2>
 
-                <label class="block text-xs text-slate-400 mb-1" for="citySelect">veya şehir seç</label>
-                <select id="citySelect" @change="pickCity($event.target.value)" class="w-full px-3 py-2.5 mb-3 bg-space-900 border border-space-700 rounded-xl text-sm focus:outline-none focus:border-neon-cyan">
-                    <option value="">— Şehir —</option>
-                    <template x-for="(c, i) in cities" :key="c.name">
-                        <option :value="i" x-text="c.name"></option>
-                    </template>
-                </select>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <label class="text-xs text-slate-400">Enlem
-                        <input type="number" step="0.0001" min="-90" max="90" x-model.number="lat" @change="locationChanged('manual')" class="mt-1 w-full px-3 py-2 bg-space-900 border border-space-700 rounded-xl text-sm text-white focus:outline-none focus:border-neon-cyan">
-                    </label>
-                    <label class="text-xs text-slate-400">Boylam
-                        <input type="number" step="0.0001" min="-180" max="180" x-model.number="lon" @change="locationChanged('manual')" class="mt-1 w-full px-3 py-2 bg-space-900 border border-space-700 rounded-xl text-sm text-white focus:outline-none focus:border-neon-cyan">
-                    </label>
-                </div>
-                <p class="text-xs text-slate-500 mt-2" x-show="locationNote" x-text="locationNote"></p>
-            </div>
-        </section>
-
-        <!-- 3. Sonuçlar -->
-        <section x-show="result" x-cloak class="bg-space-800/60 border border-space-700/80 rounded-3xl p-6">
-            <h2 class="font-bold text-lg mb-4"><span class="text-neon-cyan mr-2">3</span>Çanak Açıları
-                <span class="text-sm font-normal text-slate-400" x-text="currentPosition ? '— ' + currentPosition.label : ''"></span>
-            </h2>
-
-            <div x-show="result && !result.visible" class="mb-4 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm">
-                <i class="fa-solid fa-triangle-exclamation mr-1"></i>Bu uydu bulunduğunuz konumdan görünmüyor (ufkun altında).
-            </div>
-            <div x-show="result && result.visible && result.elevation < 10" class="mb-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm">
-                <i class="fa-solid fa-triangle-exclamation mr-1"></i>Elevasyon çok düşük: bina ve ağaçlar sinyali kolayca keser, çanak yerini AR modunda mutlaka kontrol edin.
-            </div>
-
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-space-900/70 border border-space-700 rounded-2xl p-4">
-                    <div class="text-xs text-slate-400 mb-1"><i class="fa-solid fa-compass mr-1"></i>Azimut (pusula)</div>
-                    <div class="text-3xl font-bold text-neon-cyan" x-text="fmt(magneticAz) + '°'"></div>
-                    <div class="text-xs text-slate-500 mt-1" x-text="UyduHesap.compassPoint(result?.azimuth || 0) + ' · gerçek kuzeye göre ' + fmt(result?.azimuth) + '°'"></div>
-                </div>
-                <div class="bg-space-900/70 border border-space-700 rounded-2xl p-4">
-                    <div class="text-xs text-slate-400 mb-1"><i class="fa-solid fa-arrow-up-right-dots mr-1"></i>Elevasyon</div>
-                    <div class="text-3xl font-bold text-neon-cyan" x-text="fmt(result?.elevation) + '°'"></div>
-                    <div class="text-xs text-slate-500 mt-1">ufuktan yukarı açı</div>
-                </div>
-                <div class="bg-space-900/70 border border-space-700 rounded-2xl p-4">
-                    <div class="text-xs text-slate-400 mb-1"><i class="fa-solid fa-rotate mr-1"></i>LNB skew</div>
-                    <div class="text-3xl font-bold text-neon-cyan" x-text="(result?.skew > 0 ? '+' : '') + fmt(result?.skew) + '°'"></div>
-                    <div class="text-xs text-slate-500 mt-1" x-text="skewText"></div>
-                </div>
-                <div class="bg-space-900/70 border border-space-700 rounded-2xl p-4">
-                    <div class="text-xs text-slate-400 mb-1"><i class="fa-solid fa-ruler mr-1"></i>Uyduya mesafe</div>
-                    <div class="text-3xl font-bold text-slate-200" x-text="formatNumber(Math.round(result?.distanceKm || 0))"></div>
-                    <div class="text-xs text-slate-500 mt-1">km</div>
-                </div>
-            </div>
-
-            <div class="mt-6 grid md:grid-cols-2 gap-6 items-center">
-                <!-- LNB görseli: ekrana bakan kişi = çanağın arkasından uyduya bakan kişi -->
-                <div class="flex items-center gap-5">
-                    <svg viewBox="-60 -60 120 120" class="w-36 h-36 shrink-0" role="img" :aria-label="'LNB ' + fmt(result?.skew) + ' derece döndürülmüş'">
-                        <circle r="56" fill="#111827" stroke="#374151" stroke-width="2"/>
-                        <line x1="-50" y1="0" x2="50" y2="0" stroke="#374151" stroke-width="1.5" stroke-dasharray="4 4"/>
-                        <g :transform="'rotate(' + (result?.skew || 0) + ')'">
-                            <rect x="-30" y="-20" width="60" height="40" rx="8" fill="#1f2937" stroke="#06b6d4" stroke-width="2.5"/>
-                            <circle r="11" fill="#0b0f19" stroke="#06b6d4" stroke-width="2"/>
-                            <line x1="-46" y1="0" x2="46" y2="0" stroke="#06b6d4" stroke-width="3" stroke-linecap="round"/>
-                            <polygon points="46,-5 56,0 46,5" fill="#06b6d4"/>
-                        </g>
-                    </svg>
-                    <div class="text-sm text-slate-400">
-                        <p class="mb-2">Çanağın <b class="text-slate-200">arkasında durup uyduya doğru bakarken</b> LNB'yi şekildeki gibi döndürün. Kesik çizgi: LNB'nin sıfır (düz) konumu.</p>
-                        <p class="text-xs text-slate-500">Çoğu LNB gövdesinde derece skalası bulunur. Son ayarı sinyal kalitesine bakarak ±5° içinde yapın.</p>
+                    <div x-show="result && !result.visible" class="mb-3 p-3 rounded-xl bg-rose-50 text-rose-700 text-sm">
+                        <i class="fa-solid fa-triangle-exclamation mr-1"></i><span x-text="t('find.notVisible')"></span>
                     </div>
-                </div>
+                    <div x-show="result && result.visible && result.elevation < 10" class="mb-3 p-3 rounded-xl bg-amber-50 text-amber-800 text-sm">
+                        <i class="fa-solid fa-triangle-exclamation mr-1"></i><span x-text="t('find.lowEl')"></span>
+                    </div>
 
-                <div class="text-sm text-slate-400 space-y-3">
-                    <label class="block">
-                        <span class="text-xs">Manyetik sapma (deklinasyon): <b class="text-slate-200" x-text="(declination > 0 ? '+' : '') + fmt(declination) + '°'"></b></span>
-                        <input type="range" min="-20" max="20" step="0.5" x-model.number="declination" @change="save()" class="w-full">
-                    </label>
-                    <p class="text-xs text-slate-500">Pusulalar manyetik kuzeyi gösterir. Doğu sapma pozitiftir; Türkiye'de bugün yaklaşık +5° ile +7° arasındadır. Kesin değeri NOAA "Magnetic Field Calculator" ile öğrenebilirsiniz.</p>
-                    <p class="text-xs text-slate-500"><i class="fa-solid fa-circle-info mr-1"></i>Ofset (oval) çanaklarda yansıtıcı yüzey, hesaplanan elevasyondan yaklaşık 20–26° daha dik durur; bu yüzden ayaktaki elevasyon skalasını kullanın, yüzeyin açısını ölçmeyin.</p>
-                </div>
+                    <div class="grid grid-cols-2 xl:grid-cols-4 gap-3">
+                        <div class="stat">
+                            <div class="stat-label"><i class="fa-solid fa-compass mr-1"></i><span x-text="t('find.azCompass')"></span></div>
+                            <div class="stat-value" x-text="fmt(magneticAz) + '°'"></div>
+                            <div class="text-[11px] text-ink-400" x-text="compassName(result?.azimuth || 0) + ' · ' + t('find.trueNorth', { v: fmt(result?.azimuth) })"></div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label"><i class="fa-solid fa-arrow-up-right-dots mr-1"></i><span x-text="t('common.elevation')"></span></div>
+                            <div class="stat-value" x-text="fmt(result?.elevation) + '°'"></div>
+                            <div class="text-[11px] text-ink-400" x-text="t('find.aboveHorizon')"></div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label"><i class="fa-solid fa-rotate mr-1"></i><span x-text="t('common.lnbSkew')"></span></div>
+                            <div class="stat-value" x-text="fmtSigned(result?.skew) + '°'"></div>
+                            <div class="text-[11px] text-ink-400" x-text="skewText"></div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label"><i class="fa-solid fa-ruler mr-1"></i><span x-text="t('find.distance')"></span></div>
+                            <div class="stat-value" x-text="fmtInt(Math.round(result?.distanceKm || 0))"></div>
+                            <div class="text-[11px] text-ink-400">km</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 grid md:grid-cols-2 gap-5 items-center">
+                        <div class="flex items-center gap-4">
+                            <!-- Ekrana bakan kişi = çanağın arkasından uyduya bakan kişi -->
+                            <svg viewBox="-60 -60 120 120" class="w-32 h-32 shrink-0" role="img" :aria-label="t('common.lnbSkew') + ' ' + fmt(result?.skew) + '°'">
+                                <circle r="56" fill="#f4f2ff" stroke="#d8d3fb" stroke-width="2"/>
+                                <line x1="-50" y1="0" x2="50" y2="0" stroke="#a99ff5" stroke-width="1.5" stroke-dasharray="4 4"/>
+                                <g :transform="'rotate(' + (result?.skew || 0) + ')'">
+                                    <rect x="-30" y="-20" width="60" height="40" rx="8" fill="#ffffff" stroke="#282660" stroke-width="2.5"/>
+                                    <circle r="11" fill="#e9e6ff" stroke="#282660" stroke-width="2"/>
+                                    <line x1="-46" y1="0" x2="46" y2="0" stroke="#7c6cf2" stroke-width="3" stroke-linecap="round"/>
+                                    <polygon points="46,-5 56,0 46,5" fill="#7c6cf2"/>
+                                </g>
+                            </svg>
+                            <p class="text-sm text-ink-500" x-text="t('find.lnbHelp')"></p>
+                        </div>
+                        <div class="text-sm space-y-2">
+                            <label class="block">
+                                <span class="text-xs text-ink-500" x-text="t('find.declination')"></span>
+                                <b class="text-navy-800" x-text="fmtSigned(declination) + '°'"></b>
+                                <input type="range" min="-20" max="20" step="0.5" x-model.number="declination" @change="save()" class="w-full">
+                            </label>
+                            <p class="text-xs text-ink-400" x-text="t('find.declinationHelp')"></p>
+                            <p class="text-xs text-ink-400"><i class="fa-solid fa-circle-info mr-1"></i><span x-text="t('find.offsetNote')"></span></p>
+                        </div>
+                    </div>
+                </section>
+
+                <section x-show="result" x-cloak x-ref="arCard" class="card p-4 sm:p-5" :class="arHint && 'ring-4 ring-lav-400'">
+                    <button type="button" @click="openAr()" :disabled="!result?.visible" class="btn-accent w-full py-4 text-lg">
+                        <i class="fa-solid fa-camera"></i><span x-text="t('find.openAr')"></span>
+                    </button>
+                    <p class="text-xs text-ink-400 mt-2 text-center" x-text="t('find.arHelp')"></p>
+                </section>
+
+                <section x-show="!result" class="card text-center text-ink-500 py-10 px-4">
+                    <i class="fa-solid fa-location-dot text-3xl mb-3 text-ink-400"></i>
+                    <p x-text="t('find.needLocation')"></p>
+                </section>
             </div>
-
-            <button @click="openAr()" :disabled="!result?.visible" class="mt-6 w-full py-4 bg-gradient-to-r from-neon-cyan to-neon-blue text-space-900 text-lg font-bold rounded-2xl shadow-lg shadow-cyan-500/20 hover:opacity-90 transition-opacity disabled:opacity-40">
-                <i class="fa-solid fa-camera mr-2"></i>AR ile Uyduyu Bul &amp; Engel Kontrolü
-            </button>
-            <p class="text-xs text-slate-500 mt-2 text-center">Kamera, pusula ve hareket sensörü izni istenir. En iyi sonuç için telefonu metal yüzeylerden uzak tutun ve pusulayı havada "8" çizerek kalibre edin.</p>
-        </section>
-
-        <section x-show="!result" class="text-center text-slate-500 py-8">
-            <i class="fa-solid fa-location-dot text-3xl mb-3 text-space-600"></i>
-            <p>Açıları görmek için konumunuzu belirleyin.</p>
-        </section>
+        </div>
     </main>
 
     <!-- ============ AR GÖRÜNÜMÜ ============ -->
@@ -201,11 +154,11 @@
 
         <div class="ar-hud flex justify-between items-start gap-3 bg-gradient-to-b from-black/70 to-transparent">
             <div class="text-xs font-mono leading-5">
-                <div class="text-sm font-sans font-bold text-white" x-text="currentPosition?.label"></div>
-                <div><span class="text-slate-400">Hedef</span> Az <b class="text-neon-cyan" x-text="fmt(result?.azimuth) + '°'"></b> · El <b class="text-neon-cyan" x-text="fmt(result?.elevation) + '°'"></b></div>
-                <div><span class="text-slate-400">Telefon</span> Az <b x-text="hud.heading === null ? '—' : fmt(hud.heading) + '°'"></b> · El <b x-text="hud.pitch === null ? '—' : fmt(hud.pitch) + '°'"></b></div>
+                <div class="text-sm font-sans font-bold" x-text="currentPosition?.label"></div>
+                <div><span class="text-white/60" x-text="t('ar.target')"></span> Az <b class="text-lav-200" x-text="fmt(result?.azimuth) + '°'"></b> · El <b class="text-lav-200" x-text="fmt(result?.elevation) + '°'"></b></div>
+                <div><span class="text-white/60" x-text="t('ar.phone')"></span> Az <b x-text="hud.heading === null ? '—' : fmt(hud.heading) + '°'"></b> · El <b x-text="hud.pitch === null ? '—' : fmt(hud.pitch) + '°'"></b></div>
             </div>
-            <button @click="closeAr()" aria-label="AR görünümünü kapat" class="w-11 h-11 shrink-0 rounded-full bg-black/60 border border-white/20 flex items-center justify-center">
+            <button type="button" @click="closeAr()" :aria-label="t('common.close')" class="w-11 h-11 shrink-0 rounded-full bg-black/60 border border-white/20 flex items-center justify-center">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
         </div>
@@ -217,125 +170,73 @@
         <div class="ar-bottom bg-gradient-to-t from-black/80 to-transparent">
             <div class="text-center mb-3">
                 <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-base font-bold"
-                     :class="hud.locked ? 'bg-emerald-500 text-space-900' : 'bg-black/60 border border-white/20 text-white'">
+                     :class="hud.locked ? 'bg-emerald-500 text-navy-950' : 'bg-black/60 border border-white/20'">
                     <i class="fa-solid" :class="hud.locked ? 'fa-circle-check' : 'fa-location-arrow'"></i>
                     <span x-text="hud.guidance"></span>
                 </div>
-                <div class="text-[11px] text-slate-300 mt-1" x-show="hud.error !== null" x-text="'Sapma: ' + fmt(hud.error) + '°'"></div>
+                <div class="text-[11px] text-white/70 mt-1" x-show="hud.error !== null" x-text="t('ar.deviation', { v: fmt(hud.error) })"></div>
             </div>
-
-            <div class="flex items-center gap-3 text-xs">
-                <button @click="toggleBeep()" class="px-3 py-2 rounded-xl border transition-colors" :class="beepOn ? 'bg-neon-cyan text-space-900 border-neon-cyan font-bold' : 'bg-black/60 border-white/20'">
-                    <i class="fa-solid" :class="beepOn ? 'fa-volume-high' : 'fa-volume-xmark'"></i> Bip
+            <div class="flex items-center gap-2 text-xs">
+                <button type="button" @click="toggleBeep()" class="px-3 py-2 rounded-xl border" :class="beepOn ? 'bg-lav-500 border-lav-500 font-bold' : 'bg-black/60 border-white/20'">
+                    <i class="fa-solid" :class="beepOn ? 'fa-volume-high' : 'fa-volume-xmark'"></i> <span x-text="t('ar.beep')"></span>
                 </button>
-                <button @click="showTune = !showTune" class="px-3 py-2 rounded-xl bg-black/60 border border-white/20">
-                    <i class="fa-solid fa-sliders"></i> Kalibrasyon
+                <button type="button" @click="showTune = !showTune" class="px-3 py-2 rounded-xl bg-black/60 border border-white/20">
+                    <i class="fa-solid fa-sliders"></i> <span x-text="t('ar.calibration')"></span>
                 </button>
-                <span class="text-slate-400 ml-auto text-right leading-4">Kesikli çizgi: Clarke kuşağı<br>(tüm uyduların dizildiği yay)</span>
+                <span class="text-white/60 ml-auto text-right leading-4 text-[11px]" x-text="t('ar.beltLegend')"></span>
             </div>
-
             <div x-show="showTune" class="mt-3 bg-black/70 border border-white/10 rounded-2xl p-3 space-y-2 text-xs">
-                <label class="block">Pusula ince ayarı: <b x-text="(trim > 0 ? '+' : '') + fmt(trim) + '°'"></b>
+                <label class="block"><span x-text="t('ar.trim')"></span>: <b x-text="fmtSigned(trim) + '°'"></b>
                     <input type="range" min="-30" max="30" step="0.5" x-model.number="trim" @change="save(); rebuildScene()" class="w-full">
                 </label>
-                <label class="block">Kamera görüş açısı: <b x-text="fov + '°'"></b>
+                <label class="block"><span x-text="t('ar.fov')"></span>: <b x-text="fov + '°'"></b>
                     <input type="range" min="40" max="100" step="1" x-model.number="fov" @change="save()" class="w-full">
                 </label>
-                <p class="text-slate-400">Yönü bildiğiniz bir noktaya (ör. çevrede doğru kurulmuş bir çanağın baktığı yöne) göre ince ayar yapabilirsiniz.</p>
+                <p class="text-white/60" x-text="t('ar.tuneHelp')"></p>
             </div>
         </div>
     </div>
 
-    <script src="js/veri.js"></script>
-    <script src="js/uydu-hesap.js"></script>
-    <script src="js/ar-yon.js"></script>
     <script>
         CepteVeri.registerServiceWorker();
 
-        const STORE_KEY = 'cepteuydu.hizala';
-
-        // Veri yüklenemezse kullanılacak temel liste
-        const FALLBACK_POSITIONS = [
-            [42.0, 'Türksat 4A, 5B, 6A'], [31.0, 'Türksat 5A'], [28.2, 'Astra 2E/2F/2G'], [19.2, 'Astra 1N/1P'],
-            [13.0, 'Hot Bird 13F/13G'], [7.0, 'Eutelsat 7C'], [-0.8, 'Thor 5/6/7'], [-7.0, 'Nilesat 201/301, Eutelsat 7 West A'],
-        ];
-
-        const CITIES = [
-            ['İstanbul', 41.0082, 28.9784], ['Ankara', 39.9334, 32.8597], ['İzmir', 38.4237, 27.1428],
-            ['Bursa', 40.1885, 29.0610], ['Antalya', 36.8969, 30.7133], ['Adana', 37.0000, 35.3213],
-            ['Konya', 37.8746, 32.4932], ['Gaziantep', 37.0662, 37.3833], ['Kayseri', 38.7312, 35.4787],
-            ['Eskişehir', 39.7767, 30.5206], ['Samsun', 41.2928, 36.3313], ['Trabzon', 41.0027, 39.7168],
-            ['Erzurum', 39.9043, 41.2679], ['Diyarbakır', 37.9144, 40.2306], ['Van', 38.5012, 43.3729],
-            ['Edirne', 41.6771, 26.5557], ['Lefkoşa', 35.1856, 33.3823], ['Bakü', 40.4093, 49.8671],
-            ['Berlin', 52.5200, 13.4050], ['Amsterdam', 52.3676, 4.9041], ['Londra', 51.5072, -0.1276],
-        ].map(([name, lat, lon]) => ({ name, lat, lon }));
-
-        function loadStore() {
-            try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch (e) { return {}; }
-        }
-
-        // Kaba manyetik sapma tahmini (yalnızca varsayılan değer için; kullanıcı düzeltebilir)
-        function guessDeclination(lat, lon) {
-            if (lat > 34 && lat < 43 && lon > 25 && lon < 45) return 6;    // Türkiye
-            if (lat > 35 && lat < 72 && lon > -10 && lon < 25) return 3;    // Avrupa
-            return 0;
-        }
-
-        function alignApp() {
-            const stored = loadStore();
-            const params = new URLSearchParams(location.search);
-            const lonParam = parseFloat(params.get('konum'));
+        function finderPage() {
+            const s = CepteDurum.get();
+            const lonParam = parseFloat(new URLSearchParams(location.search).get('konum'));
 
             return {
-                positions: FALLBACK_POSITIONS.map(([lon, names]) => ({ lon, names: names.split(', '), label: UyduHesap.formatOrbitalPosition(lon) + ' — ' + names })),
-                cities: CITIES,
-                satLon: Number.isFinite(lonParam) ? lonParam : (stored.satLon ?? 42.0),
+                positions: CepteVeri.FALLBACK_POSITIONS.slice(),
+                cities: CepteKonum.CITIES,
+                satLon: Number.isFinite(lonParam) ? lonParam : s.satLon,
                 customLon: null,
-                lat: stored.lat ?? null,
-                lon: stored.lon ?? null,
-                declination: stored.declination ?? null,
-                locationNote: stored.locationNote || '',
+                lat: s.lat,
+                lon: s.lon,
+                loc: s.loc,
+                declination: s.declination ?? (CepteDurum.hasLocation() ? CepteKonum.guessDeclination(s.lat, s.lon) : 0),
                 gpsBusy: false,
                 gpsError: '',
+                arHint: location.hash === '#ar',
 
                 arOpen: false,
-                beepOn: stored.beepOn ?? true,
-                trim: stored.trim ?? 0,
-                fov: stored.fov ?? 63,
+                beepOn: s.beepOn,
+                trim: s.trim,
+                fov: s.fov,
                 showTune: false,
-                hud: { heading: null, pitch: null, error: null, guidance: 'Sensörler bekleniyor...', locked: false, message: '' },
+                hud: { heading: null, pitch: null, error: null, guidance: '', locked: false, message: '' },
 
                 async init() {
-                    if (this.declination === null && this.lat !== null) this.declination = guessDeclination(this.lat, this.lon);
-                    if (this.declination === null) this.declination = 0;
-                    try {
-                        this.positions = this.buildPositions(await CepteVeri.load());
-                    } catch (e) {
-                        console.warn('Uydu listesi yüklenemedi, temel liste kullanılıyor:', e);
-                    }
+                    this.ensurePosition(this.satLon);
+                    this.save();
+                    this.positions = await CepteVeri.loadPositions();
                     this.ensurePosition(this.satLon);
                     this.$watch('satLon', () => { this.save(); this.rebuildScene(); });
                     this.$watch('declination', () => this.rebuildScene());
-                },
-
-                // Veri dosyasındaki uyduları yörünge konumuna göre gruplar (doğudan batıya)
-                buildPositions(raw) {
-                    const byLon = new Map();
-                    for (const name of Object.keys(raw)) {
-                        const lon = UyduHesap.parseOrbitalPosition(name);
-                        if (lon === null) continue;
-                        const title = name.replace(/\s*\([^)]*°[^)]*\)\s*$/, '');
-                        if (!byLon.has(lon)) byLon.set(lon, []);
-                        byLon.get(lon).push(title);
-                    }
-                    return [...byLon.entries()]
-                        .sort((a, b) => b[0] - a[0])
-                        .map(([lon, names]) => ({ lon, names, label: UyduHesap.formatOrbitalPosition(lon) + ' — ' + names.join(', ') }));
+                    if (this.arHint) this.$nextTick(() => this.$refs.arCard.scrollIntoView({ behavior: 'smooth', block: 'center' }));
                 },
 
                 ensurePosition(lon) {
                     if (!this.positions.some(p => p.lon === lon)) {
-                        this.positions.push({ lon, names: ['Özel konum'], label: UyduHesap.formatOrbitalPosition(lon) + ' — Özel konum' });
+                        this.positions.push({ lon, names: [t('find.customName')], label: UyduHesap.formatOrbitalPosition(lon) + ' — ' + t('find.customName') });
                         this.positions.sort((a, b) => b.lon - a.lon);
                     }
                 },
@@ -348,9 +249,7 @@
                     this.satLon = lon;
                 },
 
-                get currentPosition() {
-                    return this.positions.find(p => p.lon === this.satLon) || null;
-                },
+                get currentPosition() { return this.positions.find(p => p.lon === this.satLon) || null; },
 
                 get hasLocation() {
                     return Number.isFinite(this.lat) && Number.isFinite(this.lon) && Math.abs(this.lat) <= 90 && Math.abs(this.lon) <= 180;
@@ -366,55 +265,46 @@
                 },
 
                 get skewText() {
-                    const s = this.result?.skew || 0;
-                    if (Math.abs(s) < 0.5) return 'LNB düz kalır';
-                    return s > 0 ? 'arkadan bakınca saat yönünde' : 'arkadan bakınca saat yönünün tersine';
+                    const v = this.result?.skew || 0;
+                    if (Math.abs(v) < 0.5) return t('find.skewZero');
+                    return t(v > 0 ? 'find.skewCw' : 'find.skewCcw');
                 },
 
-                locate() {
-                    if (!navigator.geolocation) {
-                        this.gpsError = 'Bu tarayıcı konum servisini desteklemiyor. Şehir seçin veya koordinat girin.';
-                        return;
-                    }
+                get locNote() { this.$store.app.lang; return CepteKonum.locationLabel({ loc: this.loc }); },
+
+                async locate() {
                     this.gpsBusy = true;
                     this.gpsError = '';
-                    navigator.geolocation.getCurrentPosition(pos => {
+                    try {
+                        const p = await CepteKonum.locate();
+                        this.setLocation(p.lat, p.lon, { type: 'gps', acc: p.accuracy });
+                    } catch (e) {
+                        this.gpsError = CepteKonum.locateErrorText(e);
+                    } finally {
                         this.gpsBusy = false;
-                        this.lat = Math.round(pos.coords.latitude * 1e5) / 1e5;
-                        this.lon = Math.round(pos.coords.longitude * 1e5) / 1e5;
-                        this.locationChanged('gps', '±' + Math.round(pos.coords.accuracy) + ' m doğrulukla GPS konumu');
-                    }, err => {
-                        this.gpsBusy = false;
-                        this.gpsError = err.code === err.PERMISSION_DENIED
-                            ? 'Konum izni verilmedi. Tarayıcı ayarlarından izin verin veya şehir seçin.'
-                            : 'Konum alınamadı (' + err.message + '). Açık alanda tekrar deneyin veya şehir seçin.';
-                    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+                    }
                 },
 
                 pickCity(index) {
                     const c = this.cities[index];
-                    if (!c) return;
-                    this.lat = c.lat;
-                    this.lon = c.lon;
-                    this.locationChanged('city', c.name + ' şehir merkezi');
+                    if (c) this.setLocation(c.lat, c.lon, { type: 'city', name: c.name });
                 },
 
-                locationChanged(source, note) {
-                    this.locationNote = note || (source === 'manual' ? 'Elle girilen koordinat' : '');
-                    if (this.hasLocation && source !== 'manual') {
-                        this.declination = guessDeclination(this.lat, this.lon);
-                    }
-                    this.save();
+                manualLocation() {
+                    if (this.hasLocation) this.setLocation(this.lat, this.lon, { type: 'manual' });
+                },
+
+                setLocation(lat, lon, loc) {
+                    this.lat = lat;
+                    this.lon = lon;
+                    this.loc = loc;
+                    CepteKonum.saveLocation(lat, lon, loc);
+                    this.declination = CepteDurum.get().declination;
                     this.rebuildScene();
                 },
 
                 save() {
-                    try {
-                        localStorage.setItem(STORE_KEY, JSON.stringify({
-                            satLon: this.satLon, lat: this.lat, lon: this.lon, declination: this.declination,
-                            locationNote: this.locationNote, beepOn: this.beepOn, trim: this.trim, fov: this.fov,
-                        }));
-                    } catch (e) { /* özel sekme vb. */ }
+                    CepteDurum.set({ satLon: this.satLon, declination: this.declination, beepOn: this.beepOn, trim: this.trim, fov: this.fov });
                 },
 
                 // ---------------- AR ----------------
@@ -469,14 +359,6 @@
                         // Sensörler manyetik kuzeye göre ölçer; gerçek kuzeye çevirmek için eklenecek düzeltme
                         headingCorrection: this.declination + this.trim,
                     };
-                },
-
-                fmt(v) {
-                    return Number.isFinite(v) ? v.toFixed(1).replace('.', ',') : '—';
-                },
-
-                formatNumber(n) {
-                    return Number(n || 0).toLocaleString('tr-TR');
                 },
             };
         }

@@ -5,17 +5,24 @@ Kullanım:
     python3 scripts/veri_araci.py coz      [enc] [json]   # .enc -> okunabilir JSON
     python3 scripts/veri_araci.py kodla    [json] [enc]   # JSON -> .enc
     python3 scripts/veri_araci.py temizle  [enc]          # .enc dosyasını yerinde temizler
+    python3 scripts/veri_araci.py surum    [enc]          # veri-surum.json dosyasını yeniden üretir
+
+"kodla" ve "temizle" komutları veri-surum.json dosyasını da günceller. Uygulama bu
+dosyadaki "surum" alanı değişince yeni veriyi GitHub'dan indirir.
 
 Not: .enc dosyası UTF-8 JSON'un Base64 ile kodlanmış halidir (gerçek şifreleme değildir).
 """
 import base64
+import hashlib
 import json
+from datetime import datetime, timezone
 import re
 import sys
 from collections import OrderedDict
 
 VARSAYILAN_ENC = "uydulara_gore_kanallar.enc"
 PASIF_GRUP = "Pasif / Eski Yayınlar"
+SURUM_DOSYASI = "veri-surum.json"
 
 
 def oku(yol):
@@ -27,6 +34,25 @@ def yaz(veri, yol):
     ham = json.dumps(veri, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     with open(yol, "w", encoding="ascii") as f:
         f.write(base64.b64encode(ham).decode("ascii"))
+
+
+def surum_yaz(enc):
+    """Uygulamanın güncelleme kontrolünde kullandığı küçük özet dosyasını yazar."""
+    with open(enc, "rb") as f:
+        ham = f.read()
+    veri = json.loads(base64.b64decode(ham).decode("utf-8"))
+    ozet = {
+        "surum": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "sha256": hashlib.sha256(ham).hexdigest(),
+        "uydu": len(veri),
+        "kayit": sum(map(len, veri.values())),
+        "aktif": sum(1 for v in veri.values() for k in v if k.get("is_active")),
+        "dosya": enc,
+    }
+    with open(SURUM_DOSYASI, "w", encoding="utf-8") as f:
+        json.dump(ozet, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+    print(f"{SURUM_DOSYASI}: sürüm {ozet['surum']}, {ozet['kayit']} kayıt")
 
 
 # --- Uydu adları -----------------------------------------------------------
@@ -157,7 +183,7 @@ def temizle(veri):
 
 
 def main(argv):
-    if len(argv) < 2 or argv[1] not in ("coz", "kodla", "temizle"):
+    if len(argv) < 2 or argv[1] not in ("coz", "kodla", "temizle", "surum"):
         print(__doc__)
         return 1
     komut = argv[1]
@@ -173,6 +199,9 @@ def main(argv):
         with open(girdi, encoding="utf-8") as f:
             yaz(json.load(f, object_pairs_hook=OrderedDict), enc)
         print(f"{girdi} -> {enc}")
+        surum_yaz(enc)
+    elif komut == "surum":
+        surum_yaz(argv[2] if len(argv) > 2 else VARSAYILAN_ENC)
     else:
         enc = argv[2] if len(argv) > 2 else VARSAYILAN_ENC
         eski = oku(enc)
@@ -181,6 +210,7 @@ def main(argv):
         once = sum(map(len, eski.values()))
         sonra = sum(map(len, yeni.values()))
         print(f"Uydu grubu: {len(eski)} -> {len(yeni)}, kayıt: {once} -> {sonra}")
+        surum_yaz(enc)
     return 0
 
 

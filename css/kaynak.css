@@ -1,0 +1,66 @@
+/* Kaynak stil dosyası: `npm run css` ile css/app.css üretilir. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+[x-cloak] { display: none !important; }
+
+@layer base {
+    html { -webkit-tap-highlight-color: transparent; }
+    body { @apply bg-surface text-ink-900 font-sans antialiased min-h-screen; }
+    input, select, button { font: inherit; }
+}
+
+@layer components {
+    /* Üst bar (görseldeki lacivert başlık) */
+    .app-header {
+        @apply sticky top-0 z-40 bg-navy-800 text-white shadow-md;
+        padding-top: env(safe-area-inset-top);
+    }
+    .app-header-inner { @apply max-w-6xl mx-auto h-14 sm:h-16 px-2 sm:px-4 flex items-center gap-1; }
+    .hdr-btn { @apply w-11 h-11 rounded-full flex items-center justify-center text-xl hover:bg-white/10 active:bg-white/20 transition-colors shrink-0; }
+    .page { @apply max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-8; padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
+
+    .card { @apply bg-white rounded-2xl shadow-card; }
+    .card-link { @apply card flex transition-transform active:scale-[0.98] hover:shadow-lg; }
+    .section-title { @apply text-xs font-bold uppercase tracking-wider text-ink-500 mb-3; }
+
+    .btn { @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-colors disabled:opacity-50; }
+    .btn-primary { @apply btn bg-navy-800 text-white hover:bg-navy-700; }
+    .btn-accent { @apply btn bg-lav-500 text-white hover:bg-lav-600; }
+    .btn-soft { @apply btn bg-lav-100 text-navy-800 hover:bg-lav-200; }
+    .field { @apply w-full px-3 py-2.5 bg-surface border border-transparent rounded-xl text-sm text-ink-900 focus:outline-none focus:border-lav-500 focus:bg-white; }
+    .chip { @apply shrink-0 px-3 py-1.5 rounded-full border text-xs transition-colors; }
+    .chip-on { @apply bg-navy-800 text-white border-navy-800 font-bold; }
+    .chip-off { @apply bg-white text-ink-700 border-slate-200 hover:border-lav-400; }
+
+    /* Görseldeki kesikli halkalı simge çerçevesi */
+    .icon-ring { @apply relative flex items-center justify-center rounded-full shrink-0; width: 4.25rem; height: 4.25rem; }
+    .icon-ring::before { content: ''; position: absolute; inset: 0; border-radius: 9999px; border: 2px dashed var(--ring, #7c6cf2); opacity: .55; }
+    .icon-ring svg { width: 3.1rem; height: 3.1rem; }
+
+    .stat { @apply bg-surface rounded-xl p-3; }
+    .stat-label { @apply text-[11px] text-ink-500 mb-0.5; }
+    .stat-value { @apply text-2xl font-bold text-navy-800 tabular-nums; }
+}
+
+/* Açılış ekranı yörünge animasyonu */
+@keyframes orbit-spin { to { transform: rotate(360deg); } }
+.orbit { transform-origin: 160px 160px; animation: orbit-spin linear infinite; }
+.orbit-a { animation-duration: 18s; }
+.orbit-b { animation-duration: 26s; animation-direction: reverse; }
+.orbit-c { animation-duration: 34s; }
+@media (prefers-reduced-motion: reduce) { .orbit { animation: none; } }
+
+/* AR görünümü */
+.ar-root { position: fixed; inset: 0; z-index: 60; background: #02040a; overflow: hidden; touch-action: none; color: #fff; }
+.ar-root video, .ar-root canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ar-root video { object-fit: cover; }
+.ar-hud { position: absolute; left: 0; right: 0; padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top)); }
+.ar-bottom { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+input[type=range] { accent-color: #7c6cf2; }
+
+/* Leaflet harita sayfaları */
+.map-page { height: calc(100dvh - 3.5rem - env(safe-area-inset-top)); }
+@media (min-width: 640px) { .map-page { height: calc(100dvh - 4rem - env(safe-area-inset-top)); } }
+.leaflet-container { font: inherit; }
