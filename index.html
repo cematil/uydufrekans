@@ -181,6 +181,20 @@
                 },
             };
         }
+
+        // Capacitor Android Geri Tuşu Yönetimi
+        document.addEventListener('deviceready', function() {
+            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+                window.Capacitor.Plugins.App.addListener('backButton', function() {
+                    const path = window.location.pathname;
+                    if (path.endsWith('index.html') || path === '/' || path.endsWith('/')) {
+                        window.Capacitor.Plugins.App.exitApp();
+                    } else {
+                        window.history.back();
+                    }
+                });
+            }
+        }, false);
     </script>
 </body>
 </html>
